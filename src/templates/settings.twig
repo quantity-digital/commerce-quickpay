@@ -1,0 +1,23 @@
+{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField %}
+
+{{ autosuggestField({
+    label: "API Key"|t('quickpay'),
+	instructions: 'API key optained from the Quickpay controle panel'|t('quickpay'),
+    id: 'api_key',
+    class: 'ltr',
+    name: 'api_key',
+    suggestEnvVars: true,
+    value: gateway.api_key,
+    errors: gateway.getErrors('api_key')
+}) }}
+
+{{ autosuggestField({
+    label: "Private key"|t('quickpay'),
+	instructions: 'Private key optained from the Quickpay controle panel'|t('quickpay'),
+    id: 'private_key',
+    class: 'ltr',
+    name: 'private_key',
+    suggestEnvVars: true,
+    value: gateway.private_key,
+    errors: gateway.getErrors('private_key')
+}) }}

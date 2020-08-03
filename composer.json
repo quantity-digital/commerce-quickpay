@@ -1,0 +1,43 @@
+{
+  "name": "quantity-digital/commerce-quickpay",
+  "description": "QuickPay integration for Craft Commerce 3",
+  "type": "craft-plugin",
+  "version": "1.0.0",
+  "keywords": [
+	"craft",
+	"cms",
+	"craftcms",
+	"craft-plugin",
+	"craft-commerce",
+	"gateway",
+	"quickpay"
+  ],
+  "support": {
+	"docs": "https://github.com/quantity-digital/commerce-quickpay/blob/master/README.md",
+	"issues": "https://github.com/quantity-digital/commerce-quickpay/issues"
+  },
+  "license": "MIT",
+  "authors": [
+	{
+	  "name": "Quantity Digital",
+	  "homepage": "https://www.quantity.dk/"
+	}
+  ],
+  "require": {
+	"craftcms/cms": "^3.0",
+	"craftcms/commerce": "^3.0",
+    "quickpay/quickpay-php-client": "^1.0"
+  },
+  "require-dev": {
+	"roave/security-advisories": "dev-master"
+  },
+  "autoload": {
+	"psr-4": {
+	  "QD\\commerce\\quickpay\\": "src/"
+	}
+  },
+  "extra": {
+	"name": "QuickPay for Craft Commerce",
+	"handle": "commerce-quickpay"
+  }
+}
