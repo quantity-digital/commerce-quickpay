@@ -1,23 +1,72 @@
 {% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField %}
 
+{{ lightswitchField({
+        label: "Auto capture on status change"|t,
+        id: 'autoCapture',
+        name: 'autoCapture',
+        instructions: "If checked, payment will be autocaptured when status is changed"|t('commerce-quickpay'),
+        value: 1,
+        errors: gateway.getErrors('autoCapture'),
+		on: (gateway.autoCapture is defined) ? gateway.autoCapture : 0,
+		toggle : 'toggleThis'
+    })
+}}
+
+<div id="toggleThis" {% if gateway.autoCapture is not defined or not gateway.autoCapture %} class="hidden"{% endif %}>
+	{{ selectField({
+		first: true,
+		label: 'Auto capture status'|t('commerce-quickpay'),
+		instructions: 'On what status should the payment be auto captured'|t('commerce-quickpay'),
+		id: 'autoCaptureStatus',
+		name: 'autoCaptureStatus',
+		options : statusOptions,
+		value : gateway.autoCaptureStatus,
+		errors: gateway.getErrors('autoCaptureStatus') ?? null,
+	}) }}
+</div>
+
 {{ autosuggestField({
-    label: "API Key"|t('quickpay'),
-	instructions: 'API key optained from the Quickpay controle panel'|t('quickpay'),
+    label: "API Key"|t('commerce-quickpay'),
+	instructions: 'API key obtained from the Quickpay control panel'|t('commerce-quickpay'),
     id: 'api_key',
     class: 'ltr',
     name: 'api_key',
     suggestEnvVars: true,
     value: gateway.api_key,
-    errors: gateway.getErrors('api_key')
+    errors: gateway.getErrors('api_key'),
+	required: true,
 }) }}
 
 {{ autosuggestField({
-    label: "Private key"|t('quickpay'),
-	instructions: 'Private key optained from the Quickpay controle panel'|t('quickpay'),
+    label: "Private key"|t('commerce-quickpay'),
+	instructions: 'Private key optained from the Quickpay controle panel'|t('commerce-quickpay'),
     id: 'private_key',
     class: 'ltr',
     name: 'private_key',
     suggestEnvVars: true,
     value: gateway.private_key,
-    errors: gateway.getErrors('private_key')
+    errors: gateway.getErrors('private_key'),
+	required: true,
+}) }}
+
+{{ autosuggestField({
+    label: "Branding ID"|t('commerce-quickpay'),
+	instructions: 'Override branding. Default is merchant default branding.'|t('commerce-quickpay'),
+    id: 'brandingId',
+    class: 'ltr',
+    name: 'brandingId',
+    suggestEnvVars: true,
+    value: gateway.brandingId,
+    errors: gateway.getErrors('brandingId')
+}) }}
+
+{{ autosuggestField({
+    label: "Google Analytics ID"|t('commerce-quickpay'),
+	instructions: 'Send events to Google Analytics'|t('commerce-quickpay'),
+    id: 'analyticsId',
+    class: 'ltr',
+    name: 'analyticsId',
+    suggestEnvVars: true,
+    value: gateway.analyticsId,
+    errors: gateway.getErrors('analyticsId')
 }) }}

@@ -24,7 +24,7 @@
 	}
   ],
   "require": {
-	"craftcms/cms": "^3.0",
+	"craftcms/cms": "^3.1",
 	"craftcms/commerce": "^3.0",
     "quickpay/quickpay-php-client": "^1.0"
   },

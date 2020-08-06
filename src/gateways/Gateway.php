@@ -10,9 +10,9 @@ namespace QD\commerce\quickpay\gateways;
 use Craft;
 use craft\commerce\base\Gateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
-use craft\commerce\errors\NotImplementedException;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\Transaction;
+use craft\commerce\Plugin as CommercePlugin;
 use craft\web\ServiceUnavailableHttpException;
 use QD\commerce\quickpay\Plugin;
 
@@ -41,6 +41,10 @@ class Gateway extends BaseGateway
     //Settings options
     public $api_key;
     public $private_key;
+    public $analyticsId;
+    public $brandingId;
+    public $autoCapture;
+    public $autoCaptureStatus;
 
     // Settings
     // =========================================================================
@@ -66,7 +70,16 @@ class Gateway extends BaseGateway
      */
     public function getSettingsHtml()
     {
-        return Craft::$app->getView()->renderTemplate('commerce-quickpay/settings', ['gateway' => $this]);
+		//craft.commerce.orderStatuses.allOrderStatuses
+
+		foreach (CommercePlugin::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
+            $statusOptions[] = [
+				'value' => $status->handle,
+				'label' => $status->displayName
+			];
+        }
+
+        return Craft::$app->getView()->renderTemplate('commerce-quickpay/settings', ['gateway' => $this, 'statusOptions' => $statusOptions]);
     }
 
 	/**

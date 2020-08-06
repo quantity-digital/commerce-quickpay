@@ -32,4 +32,12 @@ trait Services
 	{
 		return $this->get('api');
 	}
+
+	/**
+	 * @return Gateway The Gateway class
+	 */
+	public function getGetway()
+	{
+		return $this->get('gateway');
+	}
 }

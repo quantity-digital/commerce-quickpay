@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Model;
 use craft\helpers\UrlHelper;
 use DateTime;
+use QD\commerce\quickpay\Plugin;
 
 /**
  *
@@ -43,6 +44,9 @@ class PaymentRequestModel extends Model
 
 	public function getLinkPayload()
 	{
+		//Get gateway
+		$gateway = Plugin::$plugin->getPayments()->getGateway();
+
 		// Settings
 		$storedTotal = $this->order->storedTotalPrice;
 		$cents = $storedTotal * 100;
@@ -54,6 +58,18 @@ class PaymentRequestModel extends Model
 			'cancel_url'   => UrlHelper::siteUrl($this->order->cancelUrl),
 			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/notify/' . $this->getTransactionReference()),
 		];
+
+		//Is analyticsId defined in settings
+		$analyticsId = Craft::parseEnv($gateway->analyticsId);
+		if($analyticsId){
+			$payload['google_analytics_tracking_id'] = $analyticsId;
+		}
+
+		//Is brandingId defined in settings
+		$brandingId = Craft::parseEnv($gateway->brandingId);
+		if($brandingId){
+			$payload['branding_id'] = $brandingId;
+		}
 
 		//For testing only
 		$payload['callback_url'] = str_replace('localhost:8002', 'b547dc285bba.ngrok.io', $payload['callback_url']);
