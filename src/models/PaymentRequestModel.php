@@ -30,15 +30,17 @@ class PaymentRequestModel extends Model
 	public function getPayload()
 	{
 		// Order info
-		$orderId = $this->order->id;
+		$orderId = $this->order->shortNumber;
 		$currency = $this->order->currency;
 
-		//Todo Handle orderId already ben sent to quickpay
+		if($count = count($this->order->transactions)){
+			$orderId = $orderId.'-'.$count;
+		}
+
 		$payload = [
-			'order_id' => (string)time(),
+			'order_id' => $orderId,
 			'currency' => $currency
 		];
-
 		return $payload;
 	}
 
@@ -87,6 +89,7 @@ class PaymentRequestModel extends Model
 
 	private function apply3ds($paymentMethods)
 	{
+		//Which payment types is allowed to have 3D-secure
 		$allowed3ds = [
 			'creditcard',
 			'dankort',
