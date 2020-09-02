@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link https://craftcms.com/
  * @copyright Copyright (c) Quantity Digital
@@ -19,68 +20,96 @@ use QD\commerce\quickpay\Plugin;
 class Gateway extends BaseGateway
 {
 
-    const SUPPORTS = [
-        'Authorize' => true,
-        'Capture' => true,
-        'CompleteAuthorize' => false,
-        'CompletePurchase' => false,
-        'PaymentSources' => false,
-        'Purchase' => true,
-        'Refund' => true,
-        'PartialRefund' => true,
+	const SUPPORTS = [
+		'Authorize' => true,
+		'Capture' => true,
+		'CompleteAuthorize' => false,
+		'CompletePurchase' => false,
+		'PaymentSources' => false,
+		'Purchase' => true,
+		'Refund' => true,
+		'PartialRefund' => true,
 		'Void' => true,
-        'Webhooks' => false,
-    ];
+		'Webhooks' => false,
+	];
 
-    const PAYMENT_TYPES = [
-        'authorize' => 'Authorize Only (Manually Capture)',
-    ];
+	const PAYMENT_TYPES = [
+		'authorize' => 'Authorize Only (Manually Capture)',
+	];
 
 	use GatewayTrait;
 
-    //Settings options
-    public $api_key;
-    public $private_key;
-    public $analyticsId;
-    public $brandingId;
-    public $autoCapture;
-    public $autoCaptureStatus;
+	//Settings options
+	public $api_key;
+	public $private_key;
+	public $analyticsId;
+	public $brandingId;
+	public $autoCapture;
+	public $autoCaptureStatus;
+	public $paymentMethods;
 
-    // Settings
-    // =========================================================================
+	// Settings
+	// =========================================================================
 
-    /**
-     * Returns the display name of this class.
-     *
-     * @return string The display name of this class.
-     */
-    public static function displayName(): string
-    {
-        return Craft::t('commerce', 'Quickpay');
-    }
+	/**
+	 * Returns the display name of this class.
+	 *
+	 * @return string The display name of this class.
+	 */
+	public static function displayName(): string
+	{
+		return Craft::t('commerce', 'Quickpay');
+	}
 
-    /**
-     * Returns the component’s settings HTML.
-     *
-     * @return string|null
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
-     * @throws \yii\base\Exception
-     */
-    public function getSettingsHtml()
-    {
+	/**
+	 * Returns the component’s settings HTML.
+	 *
+	 * @return string|null
+	 * @throws \Twig\Error\LoaderError
+	 * @throws \Twig\Error\RuntimeError
+	 * @throws \Twig\Error\SyntaxError
+	 * @throws \yii\base\Exception
+	 */
+	public function getSettingsHtml()
+	{
 		//craft.commerce.orderStatuses.allOrderStatuses
 
 		foreach (CommercePlugin::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
-            $statusOptions[] = [
+			$statusOptions[] = [
 				'value' => $status->handle,
 				'label' => $status->displayName
 			];
-        }
+		}
 
-        return Craft::$app->getView()->renderTemplate('commerce-quickpay/settings', ['gateway' => $this, 'statusOptions' => $statusOptions]);
-    }
+		$paymentMethods = [
+			'creditcard' => 'Creditcard',
+			'american-express' => 'American Express credit card',
+			'mobilepay' => 'MobilePay Online',
+			'dankort' => 'Dankort credit card',
+			'diners' => 'Diners Club credit card',
+			'fbg1886' => 'Forbrugsforeningen af 1886',
+			'jcb' => 'JCB credit card',
+			'maestro' => 'Maestro debit card',
+			'mastercard' => 'Mastercard credit card',
+			'mastercard-debet' => 'Mastercard debet card',
+			'visa' => 'Visa credit card',
+			'visa-electron' => 'Visa debet (former Visa Electron) card',
+			'paypal' => 'PayPal',
+			'sofort' => 'Sofort',
+			'viabill' => 'ViaBill',
+			'resurs' => 'Resurs Bank',
+			'klarna-payments' => 'Klarna Payments',
+			'klarna' => 'Klarna',
+			'bitcoin' => 'Bitcoin through Coinify',
+			'swish' => 'Swish',
+			'trustly' => 'Trustly',
+			'ideal' => 'iDEAL',
+			'vipps' => 'Vipps',
+			'paysafecard' => 'Paysafecard'
+		];
+
+		return Craft::$app->getView()->renderTemplate('commerce-quickpay/settings', ['gateway' => $this, 'statusOptions' => $statusOptions, 'paymentMethods' => $paymentMethods]);
+	}
 
 	/**
 	 * Returns the payment type options.
@@ -103,7 +132,7 @@ class Gateway extends BaseGateway
 	{
 		//TODO : Implement paymentlink to be sent to customer for manual orders
 		$response = Plugin::$plugin->getPayments()->intiatePaymentFromGateway($transaction);
-		if(!$response){
+		if (!$response) {
 			throw new ServiceUnavailableHttpException(Craft::t('commerce', 'An error occured when communicatiing with Quickpay. Please try again.'));
 		}
 

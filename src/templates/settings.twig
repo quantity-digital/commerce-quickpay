@@ -1,4 +1,4 @@
-{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField %}
+{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
 
 {{ lightswitchField({
         label: "Auto capture on status change"|t,
@@ -12,7 +12,7 @@
     })
 }}
 
-<div id="toggleThis" {% if gateway.autoCapture is not defined or not gateway.autoCapture %} class="hidden"{% endif %}>
+<div id="toggleThis" {% if gateway.autoCapture is not defined or not gateway.autoCapture %} class="hidden" {% endif %}>
 	{{ selectField({
 		first: true,
 		label: 'Auto capture status'|t('commerce-quickpay'),
@@ -69,4 +69,15 @@
     suggestEnvVars: true,
     value: gateway.analyticsId,
     errors: gateway.getErrors('analyticsId')
+}) }}
+
+{{ multiSelectField({
+	first: true,
+	label: 'Paymentmethods'|t('commerce-quickpay'),
+	instructions: 'What payment methods should this gateway allow? If none is selected all payment methods activated on your quickpay account will be available to the customer'|t('commerce-quickpay'),
+	id: 'paymentMethods',
+	name: 'paymentMethods',
+	options : paymentMethods,
+    values: gateway.paymentMethods,
+    class: 'selectize fullwidth',
 }) }}

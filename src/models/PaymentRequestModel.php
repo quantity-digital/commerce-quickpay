@@ -59,6 +59,13 @@ class PaymentRequestModel extends Model
 			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/notify/' . $this->getTransactionReference()),
 		];
 
+		//Is paymentmethods defined in settings
+		$paymentMethods = $gateway->paymentMethods;
+		if($paymentMethods){
+			$paymentMethods = implode(', ', $paymentMethods);
+			$payload['payment_methods'] = $paymentMethods;
+		}
+
 		//Is analyticsId defined in settings
 		$analyticsId = Craft::parseEnv($gateway->analyticsId);
 		if($analyticsId){
