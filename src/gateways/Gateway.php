@@ -47,6 +47,7 @@ class Gateway extends BaseGateway
 	public $autoCapture;
 	public $autoCaptureStatus;
 	public $paymentMethods;
+	public $enabled3ds;
 
 	// Settings
 	// =========================================================================

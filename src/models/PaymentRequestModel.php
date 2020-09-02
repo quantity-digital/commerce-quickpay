@@ -61,20 +61,21 @@ class PaymentRequestModel extends Model
 
 		//Is paymentmethods defined in settings
 		$paymentMethods = $gateway->paymentMethods;
-		if($paymentMethods){
+		if ($paymentMethods) {
+			$paymentMethods = $this->apply3ds($paymentMethods);
 			$paymentMethods = implode(', ', $paymentMethods);
 			$payload['payment_methods'] = $paymentMethods;
 		}
 
 		//Is analyticsId defined in settings
 		$analyticsId = Craft::parseEnv($gateway->analyticsId);
-		if($analyticsId){
+		if ($analyticsId) {
 			$payload['google_analytics_tracking_id'] = $analyticsId;
 		}
 
 		//Is brandingId defined in settings
 		$brandingId = Craft::parseEnv($gateway->brandingId);
-		if($brandingId){
+		if ($brandingId) {
 			$payload['branding_id'] = $brandingId;
 		}
 
@@ -82,6 +83,28 @@ class PaymentRequestModel extends Model
 		$payload['callback_url'] = str_replace('localhost:8002', 'b547dc285bba.ngrok.io', $payload['callback_url']);
 
 		return $payload;
+	}
+
+	private function apply3ds($paymentMethods)
+	{
+		$allowed3ds = [
+			'creditcard',
+			'dankort',
+			'jcb',
+			'maestro',
+			'mastercard',
+			'mastercard-debet',
+			'visa',
+			'visa-electron',
+		];
+
+		foreach($paymentMethods as $key => $paymentMethod){
+			if(\in_array($paymentMethod,$allowed3ds)){
+				$paymentMethods[$key] = '3d-'.$paymentMethod;
+			}
+		}
+
+		return $paymentMethods;
 	}
 
 	public function getTransactionReference(): string
@@ -103,5 +126,4 @@ class PaymentRequestModel extends Model
 			[['order'], 'required'],
 		];
 	}
-
 }
