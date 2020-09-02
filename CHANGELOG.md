@@ -1,1 +1,26 @@
 # Release Notes for QuickPay for Craft Commerce
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 1.1.0 - 2020-09-02
+
+### Added
+
+- Added new setting, `paymentMethods`, which give the possibility to limit gateway to specific payment methods
+
+### Changed
+
+- OrderID sent to Quickpay now get appended `-xx` if there has been a previous payment request to Quickpay. This is needed because Quickpay requires all request to have a unique OrderID.
+
+### Fixed
+
+- Fixed CallbackController function `actionContinue` to use the `returnUrl` that is set on the `Order element`
+- Fixed OrderID sent to quickpay was timestamp used in development
+
+## 1.0.0 - 2020-09-01
+
+Initial release of the Quickpay gateway plugin to the Craft Store
+
