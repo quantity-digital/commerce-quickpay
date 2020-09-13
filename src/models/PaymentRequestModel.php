@@ -30,7 +30,7 @@ class PaymentRequestModel extends Model
 	public function getPayload()
 	{
 		// Order info
-		$orderId = $this->order->shortNumber;
+		$orderId = $this->order->reference;
 		$currency = $this->order->currency;
 
 		if($count = count($this->order->transactions)){
