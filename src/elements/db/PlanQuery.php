@@ -2,8 +2,6 @@
 
 namespace QD\commerce\quickpay\elements\db;
 
-use kuriousagency\commerce\bundles\elements\Bundle;
-
 use Craft;
 use craft\db\Query;
 use craft\db\QueryAbortedException;
@@ -175,7 +173,7 @@ class PlanQuery extends ElementQuery
         $currentTimeDb = Db::prepareDateForDb(new \DateTime());
 
         switch ($status) {
-            case Bundle::STATUS_LIVE:
+            case Plan::STATUS_LIVE:
                 return [
                     'and',
                     [
@@ -189,7 +187,7 @@ class PlanQuery extends ElementQuery
                         ['>', 'quickpay_plans.expiryDate', $currentTimeDb]
                     ]
                 ];
-            case Bundle::STATUS_PENDING:
+            case Plan::STATUS_PENDING:
                 return [
                     'and',
                     [
@@ -198,7 +196,7 @@ class PlanQuery extends ElementQuery
                     ],
                     ['>', 'quickpay_plans.postDate', $currentTimeDb]
                 ];
-            case Bundle::STATUS_EXPIRED:
+            case Plan::STATUS_EXPIRED:
                 return [
                     'and',
                     [

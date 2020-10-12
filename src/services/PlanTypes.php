@@ -4,6 +4,7 @@ namespace QD\commerce\quickpay\services;
 
 use Craft;
 use craft\db\Query;
+use craft\events\SiteEvent;
 use craft\queue\jobs\ResaveElements;
 use Exception;
 use QD\commerce\quickpay\base\Table;
@@ -45,23 +46,23 @@ class PlanTypes extends Component
 	}
 
 	public function getEditablePlanTypeIds(): array
-    {
-        return $this->getAllPlanTypeIds();
-    }
+	{
+		return $this->getAllPlanTypeIds();
+	}
 
 	public function getAllPlanTypeIds(): array
-    {
-        if (null === $this->allPlanTypeIds) {
-            $this->allPlanTypeIds = [];
-            $planTypes = $this->getAllplanTypes();
+	{
+		if (null === $this->allPlanTypeIds) {
+			$this->allPlanTypeIds = [];
+			$planTypes = $this->getAllplanTypes();
 
-            foreach ($planTypes as $planType) {
-                $this->allPlanTypeIds[] = $planType->id;
-            }
-        }
+			foreach ($planTypes as $planType) {
+				$this->allPlanTypeIds[] = $planType->id;
+			}
+		}
 
-        return $this->allPlanTypeIds;
-    }
+		return $this->allPlanTypeIds;
+	}
 
 	public function getPlanTypeById(int $planTypeId)
 	{
@@ -87,27 +88,27 @@ class PlanTypes extends Component
 	}
 
 	public function getPlanTypeByHandle($handle)
-    {
-        if (isset($this->planTypesByHandle[$handle])) {
-            return $this->planTypesByHandle[$handle];
-        }
+	{
+		if (isset($this->planTypesByHandle[$handle])) {
+			return $this->planTypesByHandle[$handle];
+		}
 
-        if ($this->fetchedAllPlanTypes) {
-            return null;
-        }
+		if ($this->fetchedAllPlanTypes) {
+			return null;
+		}
 
-        $result = $this->createPlanTypeQuery()
-            ->where(['handle' => $handle])
-            ->one();
+		$result = $this->createPlanTypeQuery()
+			->where(['handle' => $handle])
+			->one();
 
-        if (!$result) {
-            return null;
-        }
+		if (!$result) {
+			return null;
+		}
 
-        $this->memoizePlanType(new PlanTypeModel($result));
+		$this->memoizePlanType(new PlanTypeModel($result));
 
-        return $this->planTypesByHandle[$handle];
-    }
+		return $this->planTypesByHandle[$handle];
+	}
 
 	public function getPlanTypeSites($planTypeId): array
 	{
@@ -314,6 +315,37 @@ class PlanTypes extends Component
 			$transaction->rollBack();
 
 			throw $e;
+		}
+	}
+
+	public function afterSaveSiteHandler(SiteEvent $event)
+	{
+		if ($event->isNew) {
+			$primarySiteSettings = (new Query())
+				->select(['planTypeId', 'uriFormat', 'template', 'hasUrls'])
+				->from([Table::PLANTYPES_SITES])
+				->where(['siteId' => $event->oldPrimarySiteId])
+				->one();
+
+			if ($primarySiteSettings) {
+				$newSiteSettings = [];
+
+				$newSiteSettings[] = [
+					$primarySiteSettings['planTypeId'],
+					$event->site->id,
+					$primarySiteSettings['uriFormat'],
+					$primarySiteSettings['template'],
+					$primarySiteSettings['hasUrls']
+				];
+
+				Craft::$app->getDb()->createCommand()
+					->batchInsert(
+						Table::PLANTYPES_SITES,
+						['planTypeId', 'siteId', 'uriFormat', 'template', 'hasUrls'],
+						$newSiteSettings
+					)
+					->execute();
+			}
 		}
 	}
 

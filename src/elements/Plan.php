@@ -463,7 +463,6 @@ class Plan extends Purchasable
 		return $this->getStock() > 0;
 	}
 
-	//TODO
 	public function getStock()
 	{
 		$stock = [];

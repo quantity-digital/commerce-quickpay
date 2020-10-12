@@ -14,6 +14,7 @@ use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\commerce\services\Purchasables;
 use craft\services\Elements;
+use craft\services\Sites;
 use craft\web\twig\variables\CraftVariable;
 use QD\commerce\quickpay\base\PluginTrait;
 use QD\commerce\quickpay\elements\Plan;
@@ -185,6 +186,9 @@ class Plugin extends \craft\base\Plugin
 				]);
 			}
 		);
+
+		Event::on(Sites::class, Sites::EVENT_AFTER_SAVE_SITE, [$this->getPlanTypes(), 'afterSaveSiteHandler']);
+		Event::on(Sites::class, Sites::EVENT_AFTER_SAVE_SITE, [$this->getPlans(), 'afterSaveSiteHandler']);
 	}
 
 	public function getCpNavItem(): array

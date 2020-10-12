@@ -1,14 +1,14 @@
-{% macro titleField(bundle) %}
+{% macro titleField(plan) %}
 	{%- import '_includes/forms' as forms -%}
 
 	{{ forms.textField({
-		label: 'Title' | t('commerce-bundles'),
-		site: bundle.site,
+		label: 'Title' | t('commerce-quickpay'),
+		site: plan.site,
 		id: 'title',
 		name: 'title',
-		value: bundle.title,
-		placeholder: 'Enter title' | t('commerce-bundles'),
-		errors: bundle.getErrors('title'),
+		value: plan.title,
+		placeholder: 'Enter title' | t('commerce-quickpay'),
+		errors: plan.getErrors('title'),
 		first: true,
 		autofocus: true,
 		required: true,
@@ -16,42 +16,42 @@
 	}) }}
 {% endmacro %}
 
-{% macro generalMetaFields(bundle) %}
+{% macro generalMetaFields(plan) %}
     {%- import '_includes/forms' as forms -%}
-        
+
     {{ forms.textField({
-        label: 'Slug' | t('commerce-bundles'),
+        label: 'Slug' | t('commerce-quickpay'),
         id: 'slug',
         name: 'slug',
-        value: bundle.slug,
-        placeholder: 'Enter slug' | t('commerce-bundles'),
-        errors: bundle.getErrors('slug') | merge(bundle.getErrors('uri'))
+        value: plan.slug,
+        placeholder: 'Enter slug' | t('commerce-quickpay'),
+        errors: plan.getErrors('slug') | merge(plan.getErrors('uri'))
     }) }}
 
     {{ forms.dateTimeField({
-        label: 'Post Date' | t('commerce-bundles'),
+        label: 'Post Date' | t('commerce-quickpay'),
         id: 'postDate',
         name: 'postDate',
-        value: bundle.postDate,
-        errors: bundle.getErrors('postDate')
+        value: plan.postDate,
+        errors: plan.getErrors('postDate')
     }) }}
 
     {{ forms.dateTimeField({
-        label: 'Expiry Date' | t('commerce-bundles'),
+        label: 'Expiry Date' | t('commerce-quickpay'),
         id: 'expiryDate',
         name: 'expiryDate',
-        value: bundle.expiryDate,
-        errors: bundle.getErrors('expiryDate')
+        value: plan.expiryDate,
+        errors: plan.getErrors('expiryDate')
     }) }}
 {% endmacro %}
 
-{% macro behavioralMetaFields(bundle) %}
+{% macro behavioralMetaFields(plan) %}
     {%- import '_includes/forms' as forms -%}
 
     {{ forms.selectField({
-        label: 'Tax Category' | t('commerce-bundles'),
+        label: 'Tax Category' | t('commerce-quickpay'),
         name: 'taxCategoryId',
-        value: bundle.taxCategoryId,
+        value: plan.taxCategoryId,
         required: true,
         options: craft.commerce.taxCategories.getAllTaxCategoriesAsList()
     }) }}
@@ -62,38 +62,38 @@
     {% endfor %}
 
     {{ forms.selectField({
-        label: 'Shipping Category' | t('commerce-bundles'),
+        label: 'Shipping Category' | t('commerce-quickpay'),
         name: 'shippingCategoryId',
-        value: bundle.shippingCategoryId,
+        value: plan.shippingCategoryId,
         required: true,
         options: shippingCategories
     }) }}
 {% endmacro %}
 
-{% macro generalFields(bundle) %}
+{% macro generalFields(plan) %}
     {%- import '_includes/forms' as forms -%}
 
     {{ forms.textField({
         id: 'sku',
-        label: 'SKU' | t('commerce-bundles'),
+        label: 'SKU' | t('commerce-quickpay'),
         required: true,
         name: 'sku',
-        value: bundle.sku,
+        value: plan.sku,
         class: 'code',
-        placeholder: 'Enter SKU' | t('commerce-bundles'),
-        errors: bundle.getErrors('sku')
+        placeholder: 'Enter SKU' | t('commerce-quickpay'),
+        errors: plan.getErrors('sku')
     }) }}
 
     {{ forms.textField({
         id: 'price',
-        label: 'Price' | t('commerce-bundles'),
+        label: 'Price' | t('commerce-quickpay'),
 		required: true,
         name: 'price',
-        value: (bundle.price == '0' ? '0' | number : (bundle.price ?  bundle.price | number ?: '')),
-        placeholder: 'Enter price' | t('commerce-bundles'),
+        value: (plan.price == '0' ? '0' | number : (plan.price ?  plan.price | number ?: '')),
+        placeholder: 'Enter price' | t('commerce-quickpay'),
         unit: craft.commerce.paymentCurrencies.primaryPaymentCurrency.iso | upper,
-        errors: bundle.getErrors('price'),
+        errors: plan.getErrors('price'),
     }) }}
-	
+
 {% endmacro %}
 

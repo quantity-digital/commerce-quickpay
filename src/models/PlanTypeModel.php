@@ -47,7 +47,7 @@ class PlanTypeModel extends Model
 
     public function getCpEditUrl(): string
     {
-        return UrlHelper::cpUrl('commerce-bundles/types/' . $this->id);
+        return UrlHelper::cpUrl('commerce-quickpay/types/' . $this->id);
     }
 
     public function getSiteSettings(): array
@@ -76,14 +76,14 @@ class PlanTypeModel extends Model
 
     public function getPlanFieldLayout(): FieldLayout
     {
-        $behavior = $this->getBehavior('bundleFieldLayout');
+        $behavior = $this->getBehavior('planFieldLayout');
         return $behavior->getFieldLayout();
     }
 
     public function behaviors(): array
     {
         return [
-            'bundleFieldLayout' => [
+            'planFieldLayout' => [
                 'class' => FieldLayoutBehavior::class,
                 'elementType' => Plan::class,
                 'idAttribute' => 'fieldLayoutId'

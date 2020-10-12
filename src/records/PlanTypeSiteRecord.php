@@ -16,7 +16,7 @@ class PlanTypeSiteRecord extends ActiveRecord
         return Table::PLANTYPES_SITES;
     }
 
-    public function getBundleType(): ActiveQueryInterface
+    public function getPlanType(): ActiveQueryInterface
     {
         return $this->hasOne(PlanTypeRecord::class, ['id', 'planTypeId']);
     }

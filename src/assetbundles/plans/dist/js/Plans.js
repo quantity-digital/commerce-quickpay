@@ -187,7 +187,7 @@
 
 			Craft.createElementEditor(this.elementType, {
 				hudTrigger: this.$newPlanBtnPlanType,
-				elementType: 'kuriousagency\\commerce\\plans\\elements\\Plan',
+				elementType: 'QD\\commerce\\quickpay\\elements\\Plan',
 				siteId: this.siteId,
 				attributes: {
 					planTypeId: planTypeId

@@ -21,10 +21,10 @@
     			<td class="thin"></td>
 			</thead>
 			<tbody>
-    			{% for bundleType in planTypes %}
-    				<tr data-id="{{ bundleType.id }}" data-name="{{ bundleType.name | t('commerce-quickpay') }}">
-    					<th scope="row" data-title="{{ 'Name' | t('commerce-quickpay') }}"><a href="{{ url('commerce-quickpay/plan-types/' ~ bundleType.id) }}">{{ bundleType.name | t('commerce-quickpay') }}</a></th>
-    					<td data-title="{{ 'Handle' | t('commerce-quickpay') }}"><code>{{ bundleType.handle }}</code></td>
+    			{% for planType in planTypes %}
+    				<tr data-id="{{ planType.id }}" data-name="{{ planType.name | t('commerce-quickpay') }}">
+    					<th scope="row" data-title="{{ 'Name' | t('commerce-quickpay') }}"><a href="{{ url('commerce-quickpay/plan-types/' ~ planType.id) }}">{{ planType.name | t('commerce-quickpay') }}</a></th>
+    					<td data-title="{{ 'Handle' | t('commerce-quickpay') }}"><code>{{ planType.handle }}</code></td>
     					<td class="thin"><a class="delete icon" title="{{ 'Delete' | t('commerce-quickpay') }}" role="button"></a></td>
     				</tr>
     			{% endfor %}

@@ -79,7 +79,7 @@
 								{{ site.name | t('site') }}
 							</a>
 						{% else %}
-							{% set url = url('commerce-quickpay/plans/#{planTypeHandle}/#{craft.app.request.getSegment(4)}/#{site.handle}') %}
+							{% set url = url("commerce-quickpay/plans/#{planTypeHandle}/#{craft.app.request.getSegment(4)}/#{site.handle}") %}
 
 							<a href="{{ url }}">
 								<div class="status {{ status }}"></div>
@@ -96,8 +96,8 @@
 	<input type="hidden" name="action" value="commerce-quickpay/plans/save"/>
 	{{ redirectInput('commerce-quickpay/plans') }}
 	<input type="hidden" name="typeId" value="{{ planType.id }}"/>
-	{% if plan.id %}<input type="hidden" name="planId" value="{{ plan.id }}"/>
-	{% endif %}
+	<input type="hidden" name="siteId" value="{{ site.id }}"/>
+	{% if plan.id %}<input type="hidden" name="planId" value="{{ plan.id }}"/>{% endif %}
 
 	<div id="fields">
 		{{ planFields.titleField(plan) }}
