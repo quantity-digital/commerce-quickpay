@@ -69,15 +69,6 @@ class Install extends Migration
 			'uid' => $this->uid(),
 		]);
 
-		$this->createTable(Table::SUBSCRIPTION_PAYMENTS, [
-			'id' => $this->primaryKey(),
-			'planId' => $this->integer(),
-			'amount' => $this->integer(),
-			'status' => '',
-			'dateCaptured' => $this->dateTime(),
-			'uid' => $this->uid(),
-		]);
-
 		$this->createTable(Table::PLANS, [
 			'id' => $this->primaryKey(),
 			'title' => $this->string()->notNull(),
@@ -136,9 +127,9 @@ class Install extends Migration
 		//Subscriptions indexes
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'userId');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'planId');
-		$this->createIndex(null, Table::SUBSCRIPTIONS, 'reference', true);
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'nextPaymentDate');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'isCanceled');
+		$this->createIndex(null, Table::SUBSCRIPTIONS, 'isSuspended');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateCreated');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateExpired');
 
@@ -185,8 +176,32 @@ class Install extends Migration
 		$this->addForeignKey(null, Table::PLANTYPES_SITES, 'planTypeId', Table::PLANTYPES, 'id', 'CASCADE', null);
 	}
 
+	protected function dropForeignKeys()
+	{
+		$this->dropForeignKey('quickpay_subscriptions_userId_fk',Table::SUBSCRIPTIONS);
+		$this->dropForeignKey('quickpay_subscriptions_planId_fk',Table::SUBSCRIPTIONS);
+		$this->dropForeignKey('quickpay_subscriptions_orderId_fk',Table::SUBSCRIPTIONS);
+
+		$this->dropForeignKey('quickpay_plans_id_fk',Table::PLANS);
+		$this->dropForeignKey('quickpay_plans_shippingCategoryId_fk',Table::PLANS);
+		$this->dropForeignKey('quickpay_plans_taxCategoryId_fk',Table::PLANS);
+		$this->dropForeignKey('quickpay_plans_typeId_fk',Table::PLANS);
+
+		$this->dropForeignKey('quickpay_purchasables_planId_fk',Table::PURCHASABLES);
+		$this->dropForeignKey('quickpay_purchasables_purchasableId_fk',Table::PURCHASABLES);
+
+		$this->dropForeignKey('quickpay_plantypes_fieldLayoutId_fk',Table::PLANTYPES);
+
+		$this->dropForeignKey('quickpay_plantypes_sites_planTypeId_fk',Table::PLANTYPES_SITES);
+		$this->dropForeignKey('quickpay_plantypes_sites_siteId_fk',Table::PLANTYPES_SITES);
+	}
+
 	protected function dropTables()
 	{
+		$this->dropTableIfExists(Table::PLANS);
+		$this->dropTableIfExists(Table::PLANTYPES_SITES);
+		$this->dropTableIfExists(Table::PLANTYPES);
+		$this->dropTableIfExists(Table::PURCHASABLES);
 		$this->dropTableIfExists(Table::SUBSCRIPTIONS);
 	}
 }
