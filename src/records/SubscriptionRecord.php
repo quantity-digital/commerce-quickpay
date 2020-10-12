@@ -23,7 +23,7 @@ class SubscriptionRecord extends ActiveRecord
      */
     public function getGateway(): ActiveQueryInterface
     {
-        return $this->hasOne(Gateway::class, ['gatewayId' => 'id']);
+        return $this->order->gatewayId;
     }
 
     /**

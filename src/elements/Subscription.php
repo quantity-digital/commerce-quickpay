@@ -51,11 +51,6 @@ class Subscription extends Element
 	public $planId;
 
 	/**
-	 * @var int Gateway id
-	 */
-	public $gatewayId;
-
-	/**
 	 * @var int|null Order id
 	 */
 	public $orderId;
@@ -275,29 +270,29 @@ class Subscription extends Element
 		return (string)$this->getPlan();
 	}
 
-	/**
-	 * Returns possible alternative plans for this subscription
-	 *
-	 * @return Plan[]
-	 */
-	public function getAlternativePlans(): array
-	{
-		$plans = Plugin::getInstance()->getPlans()->getAllGatewayPlans($this->gatewayId);
+	// /**
+	//  * Returns possible alternative plans for this subscription
+	//  *
+	//  * @return Plan[]
+	//  */
+	// public function getAlternativePlans(): array
+	// {
+	// 	$plans = Plugin::getInstance()->getPlans()->getAllGatewayPlans($this->gatewayId);
 
-		/** @var Plan $currentPlan */
-		$currentPlan = $this->getPlan();
+	// 	/** @var Plan $currentPlan */
+	// 	$currentPlan = $this->getPlan();
 
-		$alternativePlans = [];
+	// 	$alternativePlans = [];
 
-		foreach ($plans as $plan) {
-			// For all plans that are not the current plan
-			if ($plan->id !== $currentPlan->id && $plan->canSwitchFrom($currentPlan)) {
-				$alternativePlans[] = $plan;
-			}
-		}
+	// 	foreach ($plans as $plan) {
+	// 		// For all plans that are not the current plan
+	// 		if ($plan->id !== $currentPlan->id && $plan->canSwitchFrom($currentPlan)) {
+	// 			$alternativePlans[] = $plan;
+	// 		}
+	// 	}
 
-		return $alternativePlans;
-	}
+	// 	return $alternativePlans;
+	// }
 
 	/**
 	 * @inheritdoc
@@ -492,7 +487,7 @@ class Subscription extends Element
 	{
 		$rules = parent::defineRules();
 
-		$rules[] = [['userId', 'planId', 'gatewayId', 'subscriptionData'], 'required'];
+		$rules[] = [['userId', 'planId', 'orderId', 'subscriptionData'], 'required'];
 
 		return $rules;
 	}
@@ -562,7 +557,6 @@ class Subscription extends Element
 
 		// Some properties of the subscription are immutable
 		if ($isNew) {
-			$subscriptionRecord->gatewayId = $this->gatewayId;
 			$subscriptionRecord->orderId = $this->orderId;
 			$subscriptionRecord->trialDays = $this->trialDays;
 			$subscriptionRecord->userId = $this->userId;

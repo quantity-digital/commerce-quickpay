@@ -50,11 +50,6 @@ class SubscriptionQuery extends ElementQuery
     public $planId;
 
     /**
-     * @var int|int[] The gateway id
-     */
-    public $gatewayId;
-
-    /**
      * @var int|int[] The id of the order that the license must be a part of.
      */
     public $orderId;
@@ -220,27 +215,6 @@ class SubscriptionQuery extends ElementQuery
     }
 
     /**
-     * Narrows the query results based on the gateway, per its ID.
-     *
-     * Possible values include:
-     *
-     * | Value | Fetches {elements}…
-     * | - | -
-     * | `1` | with a gateway with an ID of 1.
-     * | `'not 1'` | not with a gateway with an ID of 1.
-     * | `[1, 2]` | with a gateway with an ID of 1 or 2.
-     * | `['not', 1, 2]` | not with a gateway with an ID of 1 or 2.
-     *
-     * @param int|int[] $value The property value
-     * @return static self reference
-     */
-    public function gatewayId($value)
-    {
-        $this->gatewayId = $value;
-        return $this;
-    }
-
-    /**
      * Narrows the query results based on the order, per its ID.
      *
      * Possible values include:
@@ -398,7 +372,6 @@ class SubscriptionQuery extends ElementQuery
             'quickpay_subscriptions.id',
             'quickpay_subscriptions.userId',
             'quickpay_subscriptions.planId',
-            'quickpay_subscriptions.gatewayId',
             'quickpay_subscriptions.orderId',
             'quickpay_subscriptions.subscriptionData',
             'quickpay_subscriptions.trialDays',
@@ -417,10 +390,6 @@ class SubscriptionQuery extends ElementQuery
 
         if ($this->planId) {
             $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.planId', $this->planId));
-        }
-
-        if ($this->gatewayId) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.gatewayId', $this->gatewayId));
         }
 
         if ($this->orderId) {
