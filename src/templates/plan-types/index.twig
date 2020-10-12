@@ -1,0 +1,48 @@
+{% extends 'commerce-quickpay/_layouts' %}
+
+{% set title = 'Plan Types' | t('commerce-quickpay') %}
+{% set selectedSubnavItem = 'planTypes' %}
+
+{% set crumbs = [
+    { label: 'Quickpay' | t('commerce-quickpay'), url: url('commerce-quickpay') },
+] %}
+
+{% set planTypes = craft.commercePlans.planTypes.getAllplanTypes() %}
+{% block blockContent %}
+	<div id="noplanTypes"{% if planTypes %} class="hidden"{% endif %}>
+		<p>{{ 'No plan types exist yet.' | t('commerce-quickpay') }}</p>
+	</div>
+
+	{% if planTypes | length %}
+		<table id="planTypes" class="data fullwidth collapsible">
+			<thead>
+    			<th scope="col">{{ 'Name' | t('commerce-quickpay') }}</th>
+    			<th scope="col">{{ 'Handle' | t('commerce-quickpay') }}</th>
+    			<td class="thin"></td>
+			</thead>
+			<tbody>
+    			{% for bundleType in planTypes %}
+    				<tr data-id="{{ bundleType.id }}" data-name="{{ bundleType.name | t('commerce-quickpay') }}">
+    					<th scope="row" data-title="{{ 'Name' | t('commerce-quickpay') }}"><a href="{{ url('commerce-quickpay/plan-types/' ~ bundleType.id) }}">{{ bundleType.name | t('commerce-quickpay') }}</a></th>
+    					<td data-title="{{ 'Handle' | t('commerce-quickpay') }}"><code>{{ bundleType.handle }}</code></td>
+    					<td class="thin"><a class="delete icon" title="{{ 'Delete' | t('commerce-quickpay') }}" role="button"></a></td>
+    				</tr>
+    			{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+
+    <div id="newPlanType" class="buttons">
+        <a href="{{ url('commerce-quickpay/plan-types/new') }}" class="btn submit add icon">{{ 'New Plan Type' | t('commerce-quickpay') }}</a>
+    </div>
+{% endblock %}
+
+{% js %}
+	var adminTable = new Craft.AdminTable({
+		tableSelector: '#planTypes',
+		noObjectsSelector: '#noplanTypes',
+		newObjectBtnSelector: '#newPlanType',
+		deleteAction: 'commerce-quickpay/plan-types/delete',
+		confirmDeleteMessage: '{{ 'Are you sure you want to delete “{name}” and all its plans?' | t('commerce-quickpay') }}'
+	});
+{% endjs %}

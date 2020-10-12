@@ -1,0 +1,32 @@
+{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
+<h2>QuickPay keys</h2>
+<div class="flex-fields">
+	<div class="field width-50">
+		{{ autosuggestField({
+			label: "API Key"|t('commerce-quickpay'),
+			instructions: 'API key obtained from the Quickpay control panel'|t('commerce-quickpay'),
+			id: 'api_key',
+			class: 'ltr',
+			name: 'api_key',
+			suggestEnvVars: true,
+			value: gateway.api_key,
+			errors: gateway.getErrors('api_key'),
+			required: true,
+		}) }}
+	</div>
+
+	<div class="field width-50">
+		{{ autosuggestField({
+			label: "Private key"|t('commerce-quickpay'),
+			instructions: 'Private key optained from the Quickpay controle panel'|t('commerce-quickpay'),
+			id: 'private_key',
+			class: 'ltr',
+			name: 'private_key',
+			suggestEnvVars: true,
+			value: gateway.private_key,
+			errors: gateway.getErrors('private_key'),
+			required: true,
+		}) }}
+	</div>
+</div>
+<hr>

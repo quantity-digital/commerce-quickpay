@@ -4,45 +4,50 @@ namespace QD\commerce\quickpay\services;
 
 use Craft;
 use craft\base\Component;
-use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\Plugin;
 use QuickPay\QuickPay;
 
 class Api extends Component
 {
 
-	private $_client;
+	private $client;
+	private $gateway;
 
 	// Public Methods
 	// =========================================================================
 
-	public function init()
+	public function init($gateway = null)
 	{
-		// Set initial token
-		$this->_client = new QuickPay(":".$this->getApiKey());
 	}
 
-	public function post($url,$payload = []){
-		$response = $this->_client->request->post($url, $payload);
+	public function setGateway($gateway)
+	{
+		$this->gateway = $gateway;
+		$this->client = new QuickPay(":" . $this->getApiKey());
+
+		return $this;
+	}
+
+	public function post($url, $payload = [])
+	{
+		$response = $this->client->request->post($url, $payload);
 
 		return $response->asObject();
 	}
 
-	public function put($url,$payload = []){
-		$response = $this->_client->request->put($url, $payload);
+	public function put($url, $payload = [])
+	{
+		$response = $this->client->request->put($url, $payload);
 
-		if ($response->isSuccess()){
+		if ($response->isSuccess()) {
 			return $response->asObject();
 		}
 
 		//TODO Handle error in request
 	}
 
-	private function getApiKey(){
-
-		$gateway = Plugin::$plugin->getPayments()->getGateway();
-
-		return Craft::parseEnv($gateway->api_key);
+	private function getApiKey()
+	{
+		return Craft::parseEnv($this->gateway->api_key);
 	}
-
 }

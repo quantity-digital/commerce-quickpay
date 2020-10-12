@@ -1,0 +1,20 @@
+{% extends "_layouts/elementindex" %}
+
+{% set title = "Subscriptions"|t('commerce') %}
+{% set docTitle = title~' - '~'Commerce' %}
+{% set elementType = 'QD\\commerce\\quickpay\\elements\\Subscription' %}
+{% set selectedTab = 'subscriptions' %}
+{% set selectedSubnavItem = "subscriptions" %}
+{% set bodyClass = (bodyClass is defined ? bodyClass~' ' : '') ~ "quickpaysubscriptions quickpaysubscriptionsindex" %}
+{% set crumbs = [
+    { label: "Quickpay"|t('commerce'), url: url('commerce-quickpay') },
+] %}
+{% js %}
+
+    if (typeof Craft.Commerce === 'undefined') {
+        Craft.Commerce = {};
+    }
+
+{% endjs %}
+
+{% do view.registerAssetBundle("QD\\commerce\\quickpay\\assetbundles\\subscriptions\\SubscriptionsAsset") %}

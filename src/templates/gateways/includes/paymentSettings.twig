@@ -1,0 +1,27 @@
+{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
+<h2>Payment settings</h2>
+<div class="flex-fields">
+	<div class="field width-50">
+		{{ multiSelectField({
+			label: 'Paymentmethods'|t('commerce-quickpay'),
+			instructions: 'What payment methods should this gateway allow? If none is selected all payment methods activated on your quickpay account will be available to the customer'|t('commerce-quickpay'),
+			id: 'paymentMethods',
+			name: 'paymentMethods',
+			options : paymentMethods,
+			values: gateway.paymentMethods,
+			class: 'selectize fullwidth',
+		}) }}
+	</div>
+
+	<div class="field width-50">
+		{{ lightswitchField({
+			label: "Enable 3D-Secure on payment methods that alow it"|t,
+			id: 'enabled3ds',
+			name: 'enabled3ds',
+			instructions: "If checked, all eligble payment methods 3D-secure will get it enabled. To see full list visit https://learn.quickpay.net/tech-talk/appendixes/payment-methods/#payment-methods"|t('commerce-quickpay'),
+			value: 1,
+			errors: gateway.getErrors('enabled3ds'),
+			on: (gateway.enabled3ds is defined) ? gateway.enabled3ds : 0,
+		}) }}
+	</div>
+</div>

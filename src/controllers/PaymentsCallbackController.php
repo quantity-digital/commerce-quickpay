@@ -9,7 +9,7 @@ use craft\helpers\Json;
 use QD\commerce\quickpay\Plugin as QuickpayPlugin;
 use yii\web\ForbiddenHttpException;
 
-class CallbackController extends BaseController
+class PaymentsCallbackController extends BaseController
 {
 	/**
 	 * @inheritdoc
@@ -73,7 +73,6 @@ class CallbackController extends BaseController
 
 	public function actionNotify($transactionReference = null)
 	{
-
 		if (!$transactionReference) {
 			throw new ForbiddenHttpException('Missing transaction reference.');
 		}
@@ -82,8 +81,10 @@ class CallbackController extends BaseController
 			throw new ForbiddenHttpException('Missing Checksum.');
 		}
 
+		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
+
 		//Validate checksum
-		if (!$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"])) {
+		if (!$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"],$authTransaction->getGateway())) {
 			throw new ForbiddenHttpException('Wrong Checksum.');
 		}
 
@@ -91,7 +92,6 @@ class CallbackController extends BaseController
 		$body = Craft::$app->request->getRawBody();
 		$data = Json::decode($body);
 
-		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
 		$isTransactionSuccessful = Plugin::getInstance()->getTransactions()->isTransactionSuccessful($authTransaction);
 		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
 
@@ -109,7 +109,7 @@ class CallbackController extends BaseController
 		}
 
 		if (!$isTransactionSuccessful && $data['state'] === 'rejected') {
-			//Create a new transaction with processing
+			//Create a new transaction with failed
 			$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
 			$transaction->status = \craft\commerce\records\Transaction::STATUS_FAILED;
 			$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
@@ -121,7 +121,7 @@ class CallbackController extends BaseController
 		}
 
 		if (!$order->getIsPaid() && $data['state'] === 'processed') {
-			//Create a new transaction with processing
+			//Create a new transaction with success
 			$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
 			$transaction->status = \craft\commerce\records\Transaction::STATUS_SUCCESS;
 			$transaction->type = \craft\commerce\records\Transaction::TYPE_CAPTURE;
@@ -140,10 +140,9 @@ class CallbackController extends BaseController
 	 *
 	 * @return void
 	 */
-	protected function validateSha256Checksum($checksum)
+	protected function validateSha256Checksum($checksum,$gateway)
 	{
 		$base = file_get_contents("php://input");
-		$gateway = QuickpayPlugin::$plugin->getPayments()->getGateway();
 		$privateKey = Craft::parseEnv($gateway->private_key);
 		return (hash_hmac("sha256", $base, $privateKey) === $checksum);
 	}

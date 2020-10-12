@@ -1,0 +1,33 @@
+{% extends '_layouts/elementindex' %}
+
+{% set title = 'Plans' | t('commerce-quickpay') %}
+{% set docTitle = title %}
+{% set elementType = 'QD\\commerce\\quickpay\\elements\\Plan' %}
+{% set selectedSubnavItem = 'plans' %}
+{% set crumbs = [
+    { label: "Quickpay"|t('commerce'), url: url('commerce-quickpay') },
+] %}
+
+{% js %}
+    if (typeof Craft.Plans === 'undefined') {
+        Craft.Plans = {};
+    }
+
+    {% set planTypes = [] %}
+
+    {% for planType in craft.commercePlans.planTypes.getAllplanTypes() %}
+        {% set planTypes = planTypes | merge([{
+            id: planType.id,
+            name: planType.name,
+            handle: planType.handle,
+        }]) %}
+    {% endfor %}
+
+    Craft.Plans.editablePlanTypes = {{ planTypes | json_encode | raw }};
+
+    {% if planTypeHandle is defined %}
+        window.defaultPlanTypeHandle = '{{ planTypeHandle }}';
+    {% endif %}
+{% endjs %}
+
+{% do view.registerAssetBundle("QD\\commerce\\quickpay\\assetbundles\\plans\\PlansAsset") %}

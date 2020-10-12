@@ -1,0 +1,30 @@
+{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
+<h2>Paymentwindow settings</h2>
+<div class="flex-fields">
+	<div class="field width-50">
+		{{ autosuggestField({
+			label: "Branding ID"|t('commerce-quickpay'),
+			instructions: 'Override branding. Default is merchant default branding.'|t('commerce-quickpay'),
+			id: 'brandingId',
+			class: 'ltr',
+			name: 'brandingId',
+			suggestEnvVars: true,
+			value: gateway.brandingId,
+			errors: gateway.getErrors('brandingId')
+		}) }}
+	</div>
+
+	<div class="field width-50">
+		{{ autosuggestField({
+			label: "Google Analytics ID"|t('commerce-quickpay'),
+			instructions: 'Send events to Google Analytics'|t('commerce-quickpay'),
+			id: 'analyticsId',
+			class: 'ltr',
+			name: 'analyticsId',
+			suggestEnvVars: true,
+			value: gateway.analyticsId,
+			errors: gateway.getErrors('analyticsId')
+		}) }}
+	</div>
+</div>
+<hr>

@@ -12,7 +12,7 @@ use Throwable;
  *
  * @property array $payload
  */
-class PaymentRequestModel extends Model
+class SubscriptionRequestModel extends Model
 {
 	public $amount;
 	public $orderId;
@@ -41,12 +41,12 @@ class PaymentRequestModel extends Model
 				$this->order->reference = $orderId;
 				Craft::$app->getElements()->saveElement($this->order, false);
 			} catch (Throwable $exception) {
-				Craft::error('Unable to generate order completion reference for order ID: ' . $this->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
+				Craft::error('Unable to generate order completion reference for order ID: ' . $this->order->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
 				throw $exception;
 			}
 		}
 
-
+		//Handle earlier subscription requests
 		if ($count = count($this->order->transactions)) {
 			$orderId = $orderId . '-' . $count;
 		}
@@ -59,8 +59,10 @@ class PaymentRequestModel extends Model
 
 		$payload = [
 			'order_id' => $orderId,
-			'currency' => $currency
+			'currency' => $currency,
+			'description' => 'Subscription'
 		];
+
 		return $payload;
 	}
 
@@ -76,9 +78,9 @@ class PaymentRequestModel extends Model
 		$payload = [
 			'language'     => Craft::$app->getLocale()->getLanguageID(),
 			'amount'       => $cents,
-			'continue_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/continue/' . $this->getTransactionReference()),
+			'continue_url' => UrlHelper::siteUrl('quickpay/callbacks/subscriptions/continue/' . $this->getTransactionReference()),
 			'cancel_url'   => UrlHelper::siteUrl($this->order->cancelUrl),
-			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $this->getTransactionReference()),
+			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/subscriptions/notify/' . $this->getTransactionReference()),
 		];
 
 		//Is paymentmethods defined in settings
@@ -102,7 +104,7 @@ class PaymentRequestModel extends Model
 		}
 
 		//For testing only
-		$payload['callback_url'] = str_replace('localhost:8002', 'b828403026fd.ngrok.io', $payload['callback_url']);
+		$payload['callback_url'] = str_replace('localhost:8002', 'e83a897cf7a7.ngrok.io', $payload['callback_url']);
 
 		return $payload;
 	}

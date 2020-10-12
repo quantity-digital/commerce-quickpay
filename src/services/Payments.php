@@ -3,6 +3,7 @@
 namespace QD\commerce\quickpay\services;
 
 use craft\base\Component;
+use craft\commerce\base\SubscriptionGateway;
 use craft\commerce\models\Transaction;
 use craft\commerce\services\Gateways;
 use craft\commerce\elements\Order;
@@ -13,14 +14,17 @@ use QD\commerce\quickpay\responses\CaptureResponse;
 use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
 use craft\web\ServiceUnavailableHttpException;
+use QD\commerce\quickpay\gateways\Subscriptions;
 use QD\commerce\quickpay\responses\RefundResponse;
 use yii\base\Exception;
 
 class Payments extends Component
 {
 
-	public function init()
-	{
+	public $api;
+
+	public function init(){
+		$this->api = Plugin::$plugin->getApi();
 	}
 
 	public function initiatePayment(PaymentRequestModel $paymentRequest)
@@ -28,7 +32,7 @@ class Payments extends Component
 		$payload = $paymentRequest->getPayload();
 
 		//Create payment
-		$request = Plugin::$plugin->api->post('/payments', $payload);
+		$request = $this->api->post('/payments', $payload);
 
 		return $request;
 	}
@@ -37,13 +41,16 @@ class Payments extends Component
 	{
 		//Create link to payment (redirect to it)
 		$amount = $paymentRequest->getLinkPayload();
-		$link = Plugin::$plugin->api->put('/payments/' . $request->id . '/link', $amount);
+		$link = $this->api->put('/payments/' . $request->id . '/link', $amount);
 
 		return $link;
 	}
 
 	public function intiatePaymentFromGateway(Transaction $transaction)
 	{
+		//Set gateway for API
+		$this->api->setGateway($transaction->getGateway());
+
 		$order = $transaction->getOrder();
 		$paymentRequest = new PaymentRequestModel([
 			'order'       => $order,

@@ -2,8 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 2.0.0 - 2020-10-12
+
+### Added
+
+* Added install migration, to remove project config on uninstall
+* Added Subscriptioj gateway, to support subscriptions
+* Added new Purchasable `plan` to be able to add subscriptions to cart
+
+### Fixed
+
+* Fixed error, where the `order reference` wasn't generated when creating payment request
+
+### Changed
+
+* Moved plugin trait into new namespace `QD\commerce\quickpay\base`
+* Moved gateway trait into new namespace `QD\commerce\quickpay\base`
 
 ## 1.1.2 - 2020-09-13
 

@@ -1,11 +1,5 @@
 <?php
 
-/**
- * @link https://craftcms.com/
- * @copyright Copyright (c) Quantity Digital
- * @license MIT
- */
-
 namespace QD\commerce\quickpay\gateways;
 
 use Craft;
@@ -18,7 +12,7 @@ use craft\web\ServiceUnavailableHttpException;
 use QD\commerce\quickpay\base\GatewayTrait;
 use QD\commerce\quickpay\Plugin;
 
-class Gateway extends BaseGateway
+class Subscriptions extends BaseGateway
 {
 
 	const SUPPORTS = [
@@ -27,10 +21,10 @@ class Gateway extends BaseGateway
 		'CompleteAuthorize' => false,
 		'CompletePurchase' => false,
 		'PaymentSources' => false,
-		'Purchase' => true,
-		'Refund' => true,
-		'PartialRefund' => true,
-		'Void' => true,
+		'Purchase' => false,
+		'Refund' => false,
+		'PartialRefund' => false,
+		'Void' => false,
 		'Webhooks' => false,
 	];
 
@@ -62,7 +56,7 @@ class Gateway extends BaseGateway
 	 */
 	public static function displayName(): string
 	{
-		return Craft::t('commerce', 'Quickpay Payment');
+		return Craft::t('commerce', 'Quickpay Subscription');
 	}
 
 	/**
@@ -89,7 +83,6 @@ class Gateway extends BaseGateway
 		$paymentMethods = [
 			'creditcard' => 'Creditcard',
 			'american-express' => 'American Express credit card',
-			'mobilepay' => 'MobilePay Online',
 			'dankort' => 'Dankort credit card',
 			'diners' => 'Diners Club credit card',
 			'fbg1886' => 'Forbrugsforeningen af 1886',
@@ -99,21 +92,9 @@ class Gateway extends BaseGateway
 			'mastercard-debet' => 'Mastercard debet card',
 			'visa' => 'Visa credit card',
 			'visa-electron' => 'Visa debet (former Visa Electron) card',
-			'paypal' => 'PayPal',
-			'sofort' => 'Sofort',
-			'viabill' => 'ViaBill',
-			'resurs' => 'Resurs Bank',
-			'klarna-payments' => 'Klarna Payments',
-			'klarna' => 'Klarna',
-			'bitcoin' => 'Bitcoin through Coinify',
-			'swish' => 'Swish',
-			'trustly' => 'Trustly',
-			'ideal' => 'iDEAL',
-			'vipps' => 'Vipps',
-			'paysafecard' => 'Paysafecard'
 		];
 
-		return Craft::$app->getView()->renderTemplate('commerce-quickpay/gateways/payments', ['gateway' => $this, 'statusOptions' => $statusOptions, 'paymentMethods' => $paymentMethods]);
+		return Craft::$app->getView()->renderTemplate('commerce-quickpay/gateways/subscriptions', ['gateway' => $this, 'statusOptions' => $statusOptions, 'paymentMethods' => $paymentMethods]);
 	}
 
 	/**
@@ -135,8 +116,7 @@ class Gateway extends BaseGateway
 	 */
 	public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
 	{
-		//TODO : Implement paymentlink to be sent to customer for manual orders
-		$response = Plugin::$plugin->getPayments()->intiatePaymentFromGateway($transaction);
+		$response = Plugin::$plugin->getSubscriptions()->intiateSubscriptionFromGateway($transaction);
 		if (!$response) {
 			throw new ServiceUnavailableHttpException(Craft::t('commerce', 'An error occured when communicatiing with Quickpay. Please try again.'));
 		}
@@ -154,13 +134,6 @@ class Gateway extends BaseGateway
 	public function capture(Transaction $transaction, string $reference): RequestResponseInterface
 	{
 		$response = Plugin::$plugin->getPayments()->captureFromGateway($transaction);
-
-		// if ($this->enableAutoStatus) {
-		// 	$orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($this->afterCaptureStatus);
-		// 	$order = $transaction->getOrder();
-		// 	$order->orderStatusId = $orderStatus->id;
-		// 	Craft::$app->getElements()->saveElement($order);
-		// }
 
 		return $response;
 	}

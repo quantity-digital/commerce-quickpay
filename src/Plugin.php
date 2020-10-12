@@ -2,8 +2,9 @@
 
 namespace QD\commerce\quickpay;
 
+use Cake\Core\ConsoleApplicationInterface;
 use Craft;
-use craft\commerce\events\OrderStatusEvent;
+use craft\commerce\elements\Order;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\events\PluginEvent;
@@ -14,11 +15,23 @@ use craft\commerce\services\Gateways;
 use craft\commerce\services\OrderHistories;
 use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
-use craft\commerce\records\Transaction as TransactionRecord;
+use craft\commerce\services\Payments;
+use craft\commerce\services\Purchasables;
+use craft\services\Elements;
+use craft\web\twig\variables\CraftVariable;
+use DateTime;
+use DateTimeZone;
+use QD\commerce\quickpay\base\PluginTrait;
+use QD\commerce\quickpay\elements\Plan;
+use QD\commerce\quickpay\elements\Subscription;
+use QD\commerce\quickpay\gateways\Subscriptions;
+use QD\commerce\quickpay\migrations\Install;
+use QD\commerce\quickpay\variables\PlansVariable;
+use Carbon\Carbon;
 
 class Plugin extends \craft\base\Plugin
 {
-	use Services;
+	use PluginTrait;
 
 	// Static Properties
 	// =========================================================================
@@ -37,6 +50,8 @@ class Plugin extends \craft\base\Plugin
 	 * @inheritDoc
 	 */
 	public $schemaVersion = '1.0';
+	public $hasCpSettings = false;
+	public $hasCpSection = true;
 
 	// Public Methods
 	// =========================================================================
@@ -48,6 +63,7 @@ class Plugin extends \craft\base\Plugin
 	{
 		parent::init();
 
+
 		self::$plugin = $this;
 
 		$this->initComponents();
@@ -56,13 +72,44 @@ class Plugin extends \craft\base\Plugin
 
 		// Install event listeners
 		$this->installEventListeners();
+		$this->registerElementTypes();
+
+		Event::on(
+			CraftVariable::class,
+			CraftVariable::EVENT_INIT,
+			function (Event $event) {
+				/** @var CraftVariable $variable */
+				$variable = $event->sender;
+				$variable->attachBehavior('plans', PlansVariable::class);
+			}
+		);
 
 		Event::on(
 			Plugins::class,
 			Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-			function (PluginEvent $event){
+			function (PluginEvent $event) {
 				if ($event->plugin === $this) {
 				}
+			}
+		);
+	}
+
+	private function registerElementTypes()
+	{
+		Event::on(
+			Elements::class,
+			Elements::EVENT_REGISTER_ELEMENT_TYPES,
+			function (RegisterComponentTypesEvent $event) {
+				$event->types[] = Plan::class;
+				$event->types[] = Subscription::class;
+			}
+		);
+
+		Event::on(
+			Purchasables::class,
+			Purchasables::EVENT_REGISTER_PURCHASABLE_ELEMENT_TYPES,
+			function (RegisterComponentTypesEvent $event) {
+				$event->types[] = Plan::class;
 			}
 		);
 	}
@@ -71,7 +118,6 @@ class Plugin extends \craft\base\Plugin
 	{
 
 		$this->installGlobalEventListeners();
-
 	}
 
 	public function installGlobalEventListeners()
@@ -79,16 +125,16 @@ class Plugin extends \craft\base\Plugin
 		Event::on(
 			Gateways::class,
 			Gateways::EVENT_REGISTER_GATEWAY_TYPES,
-			function (RegisterComponentTypesEvent $event){
+			function (RegisterComponentTypesEvent $event) {
 				$event->types[] = Gateway::class;
+				$event->types[] = Subscriptions::class;
 			}
 		);
 
-		// Handler: Plugins::EVENT_AFTER_LOAD_PLUGINS
 		Event::on(
 			Plugins::class,
 			Plugins::EVENT_AFTER_LOAD_PLUGINS,
-			function (){
+			function () {
 				// Install these only after all other plugins have loaded
 				$request = Craft::$app->getRequest();
 
@@ -103,31 +149,10 @@ class Plugin extends \craft\base\Plugin
 		);
 
 		//Autocapture on statuschange
-		Event::on(
-			OrderHistories::class,
-			OrderHistories::EVENT_ORDER_STATUS_CHANGE,
-			function(OrderStatusEvent $event) {
-				$order = $event->order;
-				$orderstatus = $order->getOrderStatus();
-				$gateway = $order->getGateway();
+		// Event::on(OrderHistories::class, OrderHistories::EVENT_ORDER_STATUS_CHANGE, [$this->getOrders(), 'addAutoCaptureQueue']);
 
-				//if gateway is quickpay and autocapture on statuschange is active
-				if($gateway instanceof Gateway && $gateway->autoCapture && $gateway->autoCaptureStatus === $orderstatus->handle){
-					$transaction = $this->getPayments()->getSuccessfulTransactionForOrder($order);
-
-					if ($transaction && $transaction->canCapture()) {
-						// capture transaction and display result
-						$child = CommercePlugin::getInstance()->getPayments()->captureTransaction($transaction);
-
-						$message = $child->message ? ' (' . $child->message . ')' : '';
-
-						if ($child->status == TransactionRecord::STATUS_SUCCESS) {
-							$child->order->updateOrderPaidInformation();
-						}
-					}
-				}
-			}
-		);
+		//Update order status after capture
+		// Event::on(Payments::class, Payments::EVENT_AFTER_CAPTURE_TRANSACTION, [$this->getOrders(), 'addAutoStatusQueue']);
 	}
 
 	protected function installSiteEventListeners()
@@ -135,10 +160,13 @@ class Plugin extends \craft\base\Plugin
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-			function (RegisterUrlRulesEvent $event){
+			function (RegisterUrlRulesEvent $event) {
 				$event->rules = array_merge($event->rules, [
-					'quickpay/callbacks/continue/<transactionReference>' => 'commerce-quickpay/callback/continue',
-					'quickpay/callbacks/notify/<transactionReference>' => 'commerce-quickpay/callback/notify',
+					'quickpay/callbacks/payments/continue/<transactionReference>' => 'commerce-quickpay/payments-callback/continue',
+					'quickpay/callbacks/payments/notify/<transactionReference>' => 'commerce-quickpay/payments-callback/notify',
+					'quickpay/callbacks/subscriptions/continue/<transactionReference>' => 'commerce-quickpay/subscriptions-callback/continue',
+					'quickpay/callbacks/subscriptions/notify/<transactionReference>' => 'commerce-quickpay/subscriptions-callback/notify',
+					'quickpay/cron/subscriptions/capture' => 'commerce-quickpay/cron/capture'
 				]);
 			}
 		);
@@ -146,6 +174,48 @@ class Plugin extends \craft\base\Plugin
 
 	protected function installCpEventListeners()
 	{
+		Event::on(
+			UrlManager::class,
+			UrlManager::EVENT_REGISTER_CP_URL_RULES,
+			function (RegisterUrlRulesEvent $event) {
+				$event->rules = array_merge($event->rules, [
+					'commerce-quickpay/plan-types/new' => 'commerce-quickpay/plan-types/edit',
+					'commerce-quickpay/plan-types/<planTypeId:\d+>' => 'commerce-quickpay/plan-types/edit',
+
+					'commerce-quickpay/plans/<planTypeHandle:{handle}>' => 'commerce-quickpay/plans/index',
+					'commerce-quickpay/plans/<planTypeHandle:{handle}>/new' => 'commerce-quickpay/plans/edit',
+					'commerce-quickpay/plans/<planTypeHandle:{handle}>/new/<siteHandle:\w+>' => 'commerce-quickpay/plans/edit',
+					'commerce-quickpay/plans/<planTypeHandle:{handle}>/<planId:\d+>' => 'commerce-quickpay/plans/edit',
+					'commerce-quickpay/plans/<planTypeHandle:{handle}>/<planId:\d+>/<siteHandle:\w+>' => 'commerce-quickpay/plans/edit',
+
+					'commerce-quickpay/subscriptions/new' => 				'commerce-quickpay/subscriptions/index',
+					'commerce-quickpay/subscriptions/<subscriptionId:\d+>' => 	'commerce-quickpay/subscriptions/edit',
+				]);
+			}
+		);
 	}
 
+	public function getCpNavItem(): array
+	{
+		$navItems = parent::getCpNavItem();
+
+		$navItems['label'] = Craft::t('commerce-quickpay', 'Quickpay');
+
+		$navItems['subnav']['subscriptions'] = [
+			'label' => Craft::t('commerce-quickpay', 'Subscriptions'),
+			'url' => 'commerce-quickpay/subscriptions',
+		];
+
+		$navItems['subnav']['plans'] = [
+			'label' => Craft::t('commerce-quickpay', 'Plans'),
+			'url' => 'commerce-quickpay/plans',
+		];
+
+		$navItems['subnav']['planTypes'] = [
+			'label' => Craft::t('commerce-quickpay', 'Plan Types'),
+			'url' => 'commerce-quickpay/plan-types',
+		];
+
+		return $navItems;
+	}
 }

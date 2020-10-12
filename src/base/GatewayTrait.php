@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-namespace QD\commerce\quickpay\gateways;
+namespace QD\commerce\quickpay\base;
 
 use Craft;
 use craft\commerce\base\RequestResponseInterface;
@@ -64,7 +64,7 @@ trait GatewayTrait
 	 */
 	public function processWebHook(): WebResponse
 	{
-		// TODO: Implement processWebHook() method.
+		return false;
 	}
 
 	/**
