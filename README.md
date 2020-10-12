@@ -6,7 +6,7 @@ This plugin provides an [QuickPay](https://www.quickpay.net/) integration for [C
 
 ## Requirements
 
-This plugin requires Craft CMS 3.1.5 and Craft Commerce 2.0.0 or later.
+This plugin requires Craft CMS 3.5 and Craft Commerce 3.2.0 or later.
 
 ## Installation
 
@@ -40,8 +40,6 @@ To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, cr
 ## Roadmap
 
 * Autocapture on authorize (Purchase)
-* Subscribtions
 * Capture on status change
 * Translate to aditional languages
 * On manual order, send paymentlink to customer
-

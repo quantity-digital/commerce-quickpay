@@ -2,9 +2,7 @@
 
 namespace QD\commerce\quickpay;
 
-use Cake\Core\ConsoleApplicationInterface;
 use Craft;
-use craft\commerce\elements\Order;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\events\PluginEvent;
@@ -12,22 +10,16 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\services\Plugins;
 use craft\web\UrlManager;
 use craft\commerce\services\Gateways;
-use craft\commerce\services\OrderHistories;
 use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
-use craft\commerce\services\Payments;
 use craft\commerce\services\Purchasables;
 use craft\services\Elements;
 use craft\web\twig\variables\CraftVariable;
-use DateTime;
-use DateTimeZone;
 use QD\commerce\quickpay\base\PluginTrait;
 use QD\commerce\quickpay\elements\Plan;
 use QD\commerce\quickpay\elements\Subscription;
 use QD\commerce\quickpay\gateways\Subscriptions;
-use QD\commerce\quickpay\migrations\Install;
 use QD\commerce\quickpay\variables\PlansVariable;
-use Carbon\Carbon;
 
 class Plugin extends \craft\base\Plugin
 {
@@ -49,7 +41,7 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritDoc
 	 */
-	public $schemaVersion = '1.0';
+	public $schemaVersion = '2.0';
 	public $hasCpSettings = false;
 	public $hasCpSection = true;
 
