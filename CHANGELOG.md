@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.1.0 - 2020-10-13
+
+### Added
+
+* Added Plans field to be able to select plans
+
 ## 2.0.3 - 2020-10-12
 
 ### Fixed
@@ -67,4 +73,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## 1.0.0 - 2020-09-01
 
 Initial release of the Quickpay gateway plugin to the Craft Store
-

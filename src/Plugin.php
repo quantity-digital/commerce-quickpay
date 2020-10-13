@@ -14,11 +14,13 @@ use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\commerce\services\Purchasables;
 use craft\services\Elements;
+use craft\services\Fields;
 use craft\services\Sites;
 use craft\web\twig\variables\CraftVariable;
 use QD\commerce\quickpay\base\PluginTrait;
 use QD\commerce\quickpay\elements\Plan;
 use QD\commerce\quickpay\elements\Subscription;
+use QD\commerce\quickpay\fields\Plans;
 use QD\commerce\quickpay\gateways\Subscriptions;
 use QD\commerce\quickpay\variables\PlansVariable;
 
@@ -66,6 +68,14 @@ class Plugin extends \craft\base\Plugin
 		// Install event listeners
 		$this->installEventListeners();
 		$this->registerElementTypes();
+
+		Event::on(
+			Fields::class,
+			Fields::EVENT_REGISTER_FIELD_TYPES,
+			function (RegisterComponentTypesEvent $event) {
+				$event->types[] = Plans::class;
+			}
+		);
 
 		Event::on(
 			CraftVariable::class,
