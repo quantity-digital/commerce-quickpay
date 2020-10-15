@@ -119,11 +119,11 @@ class Subscriptions extends Component
 
 		$subscription->setFieldValues($fieldValues);
 
-		$this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION, new SubscriptionEvent([
+		$event = $this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION, new SubscriptionEvent([
 			'subscription' => $subscription
 		]));
 
-		Craft::$app->getElements()->saveElement($subscription, false);
+		Craft::$app->getElements()->saveElement($event->subscription, false);
 
 		return $subscription;
 	}

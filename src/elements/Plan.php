@@ -11,6 +11,7 @@ use craft\commerce\elements\Order;
 use craft\commerce\models\LineItem;
 use craft\elements\db\ElementQueryInterface;
 use craft\elements\actions\Delete;
+use craft\events\CancelableEvent;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\UrlHelper;
 use craft\validators\DateTimeValidator;
@@ -31,6 +32,7 @@ class Plan extends Purchasable
 
 	const EVENT_BEFORE_CAPTURE_PLAN_SNAPSHOT = 'beforeCapturePlanSnapshot';
 	const EVENT_AFTER_CAPTURE_PLAN_SNAPSHOT = 'afterCapturePlanSnapshot';
+	const EVENT_BEFORE_SUBSCRIPTION_CREATE = 'beforeLineItemSubscriptionCreate';
 
 	// Public Properties
     // =========================================================================
@@ -570,7 +572,14 @@ class Plan extends Purchasable
 	 */
 	public function afterOrderComplete(Order $order, LineItem $lineItem)
 	{
-		$subscription = Plugin::getInstance()->getSubscriptions()->createSubscription($order->getUser(), $this, $order, $lineItem->snapshot['options']);
+
+		$event = $this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CREATE, new CancelableEvent());
+
+		if(!$event->isValid){
+			return;
+		}
+
+		Plugin::getInstance()->getSubscriptions()->createSubscription($order->getUser(), $this, $order, $lineItem->snapshot['options']);
 	}
 
 	// Protected methods
