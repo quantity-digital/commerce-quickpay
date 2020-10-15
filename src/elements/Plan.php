@@ -572,8 +572,8 @@ class Plan extends Purchasable
 	 */
 	public function afterOrderComplete(Order $order, LineItem $lineItem)
 	{
-
-		$event = $this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CREATE, new CancelableEvent());
+		$event = new CancelableEvent();
+		$this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CREATE, new CancelableEvent());
 
 		if(!$event->isValid){
 			return;

@@ -118,10 +118,10 @@ class Subscriptions extends Component
 		$subscription->isSuspended = false;
 
 		$subscription->setFieldValues($fieldValues);
-
-		$event = $this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION, new SubscriptionEvent([
+		$event =  new SubscriptionEvent([
 			'subscription' => $subscription
-		]));
+		]);
+		$this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION,$event);
 
 		Craft::$app->getElements()->saveElement($event->subscription, false);
 
