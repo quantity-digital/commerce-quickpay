@@ -51,5 +51,7 @@ class Orders extends Component
 				return $transaction;
 			}
 		}
+
+		return false;
 	}
 }

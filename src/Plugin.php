@@ -44,7 +44,7 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritDoc
 	 */
-	public $schemaVersion = '2.0';
+	public $schemaVersion = '2.1';
 	public $hasCpSettings = false;
 	public $hasCpSection = true;
 
@@ -57,7 +57,6 @@ class Plugin extends \craft\base\Plugin
 	public function init()
 	{
 		parent::init();
-
 
 		self::$plugin = $this;
 

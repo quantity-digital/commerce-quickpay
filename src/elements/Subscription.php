@@ -7,13 +7,11 @@ use Craft;
 use craft\base\Element;
 use craft\commerce\records\Transaction;
 use craft\db\Query;
-use craft\elements\db\ElementQuery;
 use craft\elements\db\ElementQueryInterface;
 use craft\elements\User;
 use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
-use DateInterval;
 use DateTime;
 use Exception;
 use QD\commerce\quickpay\base\Table;
@@ -114,6 +112,12 @@ class Subscription extends Element
 	 * @var array The subscription data from gateway
 	 */
 	public $_subscriptionData;
+
+	public $cardExpireYear;
+	public $cardExpireMonth;
+	public $cardLast4;
+	public $cardBrand;
+	public $dateStarted;
 
 
 	/**
@@ -230,7 +234,7 @@ class Subscription extends Element
 	 */
 	public function getTrialExpires()
 	{
-		return Carbon::parse($this->dateCreated->format('Y-m-d H:i'))->addDay($this->trialDays)->format('Y-m-d H:i');
+		return Carbon::parse($this->dateStarted->format('Y-m-d H:i'))->addDay($this->trialDays)->format('Y-m-d H:i');
 	}
 
 	/**
@@ -389,7 +393,7 @@ class Subscription extends Element
 				'key' => '*',
 				'label' => Craft::t('commerce', 'All active subscriptions'),
 				'criteria' => ['planId' => $planIds],
-				'defaultSort' => ['dateCreated', 'desc']
+				'defaultSort' => ['dateStarted', 'desc']
 			]
 		];
 
@@ -548,6 +552,7 @@ class Subscription extends Element
 		$subscriptionRecord->dateCanceled = $this->dateCanceled;
 		$subscriptionRecord->dateExpired = $this->dateExpired;
 		$subscriptionRecord->hasStarted = $this->hasStarted;
+		$subscriptionRecord->dateStarted = $this->dateStarted;
 		$subscriptionRecord->isSuspended = $this->isSuspended;
 		$subscriptionRecord->dateSuspended = $this->dateSuspended;
 
@@ -574,7 +579,7 @@ class Subscription extends Element
 
 	public function calculateFirstPaymentDate()
 	{
-		return Carbon::instance($this->dateCreated)->addDay($this->trialDays);
+		return Carbon::instance($this->dateStarted)->addDay($this->trialDays);
 	}
 
 	/**
@@ -586,7 +591,7 @@ class Subscription extends Element
 			'title' => ['label' => Craft::t('commerce', 'Subscription plan')],
 			'subscriber' => ['label' => Craft::t('commerce', 'Subscribing user')],
 			'dateCanceled' => ['label' => Craft::t('commerce', 'Cancellation date')],
-			'dateCreated' => ['label' => Craft::t('commerce', 'Subscription date')],
+			'dateStarted' => ['label' => Craft::t('commerce', 'Subscription date')],
 			'nextPaymentDate' => ['label' => Craft::t('commerce', 'Next paymentdate')],
 			'dateExpired' => ['label' => Craft::t('commerce', 'Expiry date')],
 			'trialExpires' => ['label' => Craft::t('commerce', 'Trial expiry date')],
@@ -603,7 +608,7 @@ class Subscription extends Element
 
 		$attributes[] = 'subscriber';
 		$attributes[] = 'orderLink';
-		$attributes[] = 'dateCreated';
+		$attributes[] = 'dateStarted';
 
 		return $attributes;
 	}
@@ -653,14 +658,14 @@ class Subscription extends Element
 		return [
 			[
 				'label' => Craft::t('commerce', 'Subscription date'),
-				'orderBy' => 'quickpay_subscriptions.dateCreated',
-				'attribute' => 'dateCreated',
+				'orderBy' => 'quickpay_subscriptions.dateStarted',
+				'attribute' => 'dateStarted',
 				'defaultDir' => 'desc',
 			],
 			[
 				'label' => Craft::t('commerce', 'Subscription date'),
 				'orderBy' => 'quickpay_subscriptions.nextPaymentDate',
-				'attribute' => 'dateCreated',
+				'attribute' => 'nextPaymentDate',
 				'defaultDir' => 'desc',
 			],
 			[

@@ -102,7 +102,7 @@ class SubscriptionQuery extends ElementQuery
     /**
      * @var array
      */
-    protected $defaultOrderBy = ['quickpay_subscriptions.dateCreated' => SORT_DESC];
+    protected $defaultOrderBy = ['quickpay_subscriptions.dateStarted' => SORT_DESC];
 
     /**
      * @inheritdoc
@@ -379,9 +379,14 @@ class SubscriptionQuery extends ElementQuery
             'quickpay_subscriptions.isCanceled',
             'quickpay_subscriptions.dateCanceled',
             'quickpay_subscriptions.dateExpired',
+            'quickpay_subscriptions.dateStarted',
             'quickpay_subscriptions.hasStarted',
             'quickpay_subscriptions.isSuspended',
             'quickpay_subscriptions.dateSuspended',
+            'quickpay_subscriptions.cardLast4',
+            'quickpay_subscriptions.cardExpireMonth',
+            'quickpay_subscriptions.cardExpireYear',
+            'quickpay_subscriptions.cardBrand',
         ]);
 
         if ($this->userId) {
@@ -477,16 +482,16 @@ class SubscriptionQuery extends ElementQuery
     {
         if ($onTrial) {
             if (Craft::$app->getDb()->getIsPgsql()) {
-                return new Expression("NOW() <= [[quickpay_subscriptions.dateCreated]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
+                return new Expression("NOW() <= [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
             }
 
-            return new Expression('NOW() <= ADDDATE([[quickpay_subscriptions.dateCreated]], [[quickpay_subscriptions.trialDays]])');
+            return new Expression('NOW() <= ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
         }
 
         if (Craft::$app->getDb()->getIsPgsql()) {
-            return new Expression("NOW() > [[quickpay_subscriptions.dateCreated]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
+            return new Expression("NOW() > [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
         }
 
-        return new Expression('NOW() > ADDDATE([[quickpay_subscriptions.dateCreated]], [[quickpay_subscriptions.trialDays]])');
+        return new Expression('NOW() > ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
     }
 }

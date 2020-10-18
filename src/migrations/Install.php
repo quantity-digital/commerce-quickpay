@@ -66,6 +66,11 @@ class Install extends Migration
 			'dateSuspended' => $this->dateTime(),
 			'dateCreated' => $this->dateTime()->notNull(),
 			'dateUpdated' => $this->dateTime()->notNull(),
+			'dateStarted' => $this->dateTime()->notNull(),
+			'cardExpireYear' => $this->integer(),
+			'cardExpireMonth' => $this->integer(),
+			'cardLast4' => $this->string(),
+			'cardBrand' => $this->string(),
 			'uid' => $this->uid(),
 		]);
 
@@ -132,6 +137,7 @@ class Install extends Migration
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'isCanceled');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'isSuspended');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateCreated');
+		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateStarted');
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateExpired');
 
 		//Plans indexes

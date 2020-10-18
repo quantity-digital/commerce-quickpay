@@ -7,7 +7,6 @@ use Craft;
 use craft\base\Component;
 use craft\commerce\elements\Order;
 use craft\commerce\errors\SubscriptionException;
-use craft\commerce\errors\TransactionException;
 use craft\commerce\events\SubscriptionEvent;
 use craft\commerce\models\Transaction;
 use craft\elements\User;
@@ -18,9 +17,9 @@ use QD\commerce\quickpay\elements\Subscription;
 use QD\commerce\quickpay\models\SubscriptionRequestModel;
 use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\SubscriptionResponse;
-use craft\commerce\Plugin as CommercePlugin;
 use QD\commerce\quickpay\responses\CaptureResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
+use craft\helpers\Json;
 use Exception;
 use QD\commerce\quickpay\events\SubscriptionCaptureEvent;
 use QD\commerce\quickpay\events\SubscriptionUnsubscribeEvent;
@@ -115,7 +114,21 @@ class Subscriptions extends Component
 		$subscription->subscriptionData = $subscriptionData;
 		$subscription->isCanceled = false;
 		$subscription->hasStarted = true;
+		$subscription->dateStarted = new DateTime('now');
 		$subscription->isSuspended = false;
+
+		$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
+
+		//If authorized subscription exists, store the data
+		if($transaction){
+			$response = Json::decode($transaction->response,false);
+			$metdata = $response->metadata;
+
+			$subscription->cardExpireYear = $metdata->exp_year;
+			$subscription->cardExpireMonth = $metdata->exp_month;
+			$subscription->cardLast4 = $metdata->last4;
+			$subscription->cardBrand = $metdata->brand;
+		}
 
 		$subscription->setFieldValues($fieldValues);
 		$event =  new SubscriptionEvent([
@@ -130,10 +143,10 @@ class Subscriptions extends Component
 
 	public function calculateNextPaymentDate($subscription)
 	{
-		$dayCreated = $subscription->dateCreated->format('d');
+		$dateStarted = $subscription->dateStarted->format('d');
 
-		$monthLength = $subscription->dateCreated->format('t');
-		$shift = $monthLength - $dayCreated;
+		$monthLength = $subscription->dateStarted->format('t');
+		$shift = $monthLength - $dateStarted;
 
 		$intervals = [
 			'daily' => '+1 day',
@@ -159,7 +172,7 @@ class Subscriptions extends Component
 
 			case 'yearly':
 
-				if ($dayCreated > 28) {
+				if ($dateStarted > 28) {
 					$dateObject = Carbon::instance($subscription->nextPaymentDate)->addYearNoOverflow($intervals[$planInterval])->lastOfMonth()->subDay($shift);
 					break;
 				}
@@ -169,7 +182,7 @@ class Subscriptions extends Component
 
 			default:
 
-				if ($dayCreated > 28) {
+				if ($dateStarted > 28) {
 					$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($intervals[$planInterval])->lastOfMonth()->subDay($shift);
 					break;
 				}
@@ -178,7 +191,7 @@ class Subscriptions extends Component
 				break;
 		}
 
-		return $dateObject->setTime($subscription->dateCreated->format('H'), $subscription->dateCreated->format('i'));
+		return $dateObject->setTime($subscription->dateStarted->format('H'), $subscription->dateStarted->format('i'));
 	}
 
 	public function cancelSubscription(Subscription $subscription): bool
