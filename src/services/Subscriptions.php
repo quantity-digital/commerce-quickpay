@@ -43,6 +43,10 @@ class Subscriptions extends Component
 		$this->api = Plugin::$plugin->getApi();
 	}
 
+	public function getSubscriptionById($orderId){
+		return Subscription::find()->anyStatus()->orderId($orderId)->one();
+	}
+
 	/**
 	 * Initiate the subscription on Quickpay
 	 *
@@ -66,7 +70,6 @@ class Subscriptions extends Component
 
 		return $link;
 	}
-
 
 	public function intiateSubscriptionFromGateway(Transaction $transaction)
 	{
@@ -124,6 +127,7 @@ class Subscriptions extends Component
 			$response = Json::decode($transaction->response,false);
 			$metdata = $response->metadata;
 
+			$subscription->quickpayReference = $transaction->reference;
 			$subscription->cardExpireYear = $metdata->exp_year;
 			$subscription->cardExpireMonth = $metdata->exp_month;
 			$subscription->cardLast4 = $metdata->last4;

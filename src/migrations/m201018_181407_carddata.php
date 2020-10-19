@@ -21,6 +21,7 @@ class m201018_181407_carddata extends Migration
         $this->addColumn(Table::SUBSCRIPTIONS,'cardExpireYear',$this->integer());
         $this->addColumn(Table::SUBSCRIPTIONS,'cardBrand',$this->string());
 		$this->addColumn(Table::SUBSCRIPTIONS,'dateStarted', $this->dateTime()->notNull());
+		$this->addColumn(Table::SUBSCRIPTIONS,'quickpayReference', $this->string();
 
 		$this->createIndex(null, Table::SUBSCRIPTIONS, 'dateStarted');
     }

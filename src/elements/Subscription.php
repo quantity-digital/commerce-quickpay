@@ -118,6 +118,7 @@ class Subscription extends Element
 	public $cardLast4;
 	public $cardBrand;
 	public $dateStarted;
+	public $quickpayReference;
 
 
 	/**
@@ -555,6 +556,11 @@ class Subscription extends Element
 		$subscriptionRecord->dateStarted = $this->dateStarted;
 		$subscriptionRecord->isSuspended = $this->isSuspended;
 		$subscriptionRecord->dateSuspended = $this->dateSuspended;
+		$subscriptionRecord->quickpayReference = $this->quickpayReference;
+		$subscriptionRecord->cardExpireYear = $this->cardExpireYear;
+		$subscriptionRecord->cardExpireMonth = $this->cardExpireMonth;
+		$subscriptionRecord->cardLast4 = $this->cardLast4;
+		$subscriptionRecord->cardBrand = $this->cardBrand;
 
 		// We want to always have the same date as the element table, based on the logic for updating these in the element service i.e resaving
 		$subscriptionRecord->dateUpdated = $this->dateUpdated;

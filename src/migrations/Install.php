@@ -71,6 +71,7 @@ class Install extends Migration
 			'cardExpireMonth' => $this->integer(),
 			'cardLast4' => $this->string(),
 			'cardBrand' => $this->string(),
+			'quickpayReference' => $this->string(),
 			'uid' => $this->uid(),
 		]);
 

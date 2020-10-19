@@ -41,17 +41,26 @@ class Orders extends Component
 
 	public function getSuccessfulTransactionForOrder(Order $order)
 	{
-		foreach ($order->getTransactions() as $transaction) {
+		$transactions = $order->getTransactions();
+		usort($transactions, array($this,'dateCompare'));
+
+		foreach ($transactions as $transaction) {
 
 			if (
 				$transaction->status === TransactionRecord::STATUS_SUCCESS
 				&& $transaction->type === TransactionRecord::TYPE_AUTHORIZE
 			) {
-
 				return $transaction;
 			}
 		}
 
 		return false;
+	}
+
+	private static function dateCompare($element1, $element2)
+	{
+		$datetime1 = date_timestamp_get($element1['dateCreated']);
+		$datetime2 = date_timestamp_get($element2['dateCreated']);
+		return $datetime2 - $datetime1;
 	}
 }

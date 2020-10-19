@@ -387,6 +387,7 @@ class SubscriptionQuery extends ElementQuery
             'quickpay_subscriptions.cardExpireMonth',
             'quickpay_subscriptions.cardExpireYear',
             'quickpay_subscriptions.cardBrand',
+            'quickpay_subscriptions.quickpayReference',
         ]);
 
         if ($this->userId) {

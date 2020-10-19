@@ -6,7 +6,7 @@ use Craft;
 use craft\commerce\controllers\BaseController;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\helpers\Json;
-use QD\commerce\quickpay\Plugin as QuickpayPlugin;
+use QD\commerce\quickpay\Plugin;
 use yii\web\ForbiddenHttpException;
 
 class SubscriptionsCallbackController extends BaseController
@@ -89,25 +89,36 @@ class SubscriptionsCallbackController extends BaseController
 			throw new ForbiddenHttpException('Wrong Checksum.');
 		}
 
-		//Get requesy body
+		//Get request body
 		$body = Craft::$app->request->getRawBody();
-		$data = Json::decode($body);
+		$data = Json::decode($body,false);
 
-		$authTransaction = CommercePlugin::getInstance()->transactions->getTransactionByHash($transactionReference);
 		$isTransactionSuccessful = CommercePlugin::getInstance()->getTransactions()->isTransactionSuccessful($authTransaction);
 		$order = CommercePlugin::getInstance()->orders->getOrderById($authTransaction->orderId);
+		$subscription = Plugin::getInstance()->getSubscriptions()->getSubscriptionById($order->id);
 
-		if (!$isTransactionSuccessful && $data['accepted'] && $data['state'] === 'active') {
-			//Create a new transaction with processing
+		if (!$isTransactionSuccessful && $data->accepted && $data->state === 'active') {
+			//Create a new transaction with success
 			$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order, $authTransaction);
 			$transaction->status = \craft\commerce\records\Transaction::STATUS_SUCCESS;
 			$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
-			$transaction->reference = $data['id'];
+			$transaction->reference = $data->id;
 			$transaction->response = $body;
 			$transaction->message = 'Transaction authorized.';
 			CommercePlugin::getInstance()->transactions->saveTransaction($transaction);
-			return;
 		}
+
+		if($subscription && $data->accepted && $data->state === 'active'){
+			$metdata = $data->metadata;
+			$subscription->quickpayReference = $data->id;
+			$subscription->cardExpireYear = $metdata->exp_year;
+			$subscription->cardExpireMonth = $metdata->exp_month;
+			$subscription->cardLast4 = $metdata->last4;
+			$subscription->cardBrand = $metdata->brand;
+			Craft::$app->getElements()->saveElement($subscription, false);
+		}
+
+		return;
 	}
 
 	/**
