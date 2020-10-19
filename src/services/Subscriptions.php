@@ -22,6 +22,7 @@ use craft\commerce\records\Transaction as TransactionRecord;
 use craft\helpers\Json;
 use Exception;
 use QD\commerce\quickpay\events\SubscriptionCaptureEvent;
+use QD\commerce\quickpay\events\SubscriptionResubscribeEvent;
 use QD\commerce\quickpay\events\SubscriptionUnsubscribeEvent;
 use Throwable;
 
@@ -34,7 +35,8 @@ class Subscriptions extends Component
 	const EVENT_AFTER_COMPLETED_SUBSCRIPTION_CAPTURE = 'afterCompletedeSubscriptionCapture';
 	const EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE = 'afterFailedSubscriptionCapture';
 	const EVENT_BEFORE_SUBSCRIPTION_CAPTURE = 'afterBeforeSubscriptionCapture';
-	const EVENT_AFTER_SUBSCRIPTION_UNSUBSCRIBE = 'afterAfterSubscriptionUnsubscribe';
+	const EVENT_AFTER_SUBSCRIPTION_UNSUBSCRIBE = 'afterSubscriptionUnsubscribe';
+	const EVENT_AFTER_SUBSCRIPTION_RESUBSCRIBE = 'afterSubscriptionResubscribe';
 
 	public $api;
 
@@ -147,6 +149,7 @@ class Subscriptions extends Component
 
 	public function calculateNextPaymentDate($subscription)
 	{
+		$subscription->dateStarted = DateTime::createFromFormat('Y-m-j H:i:s',$subscription->dateStarted);
 		$dateStarted = $subscription->dateStarted->format('d');
 
 		$monthLength = $subscription->dateStarted->format('t');
@@ -218,6 +221,37 @@ class Subscriptions extends Component
 
 		if ($this->hasEventHandlers(self::EVENT_AFTER_SUBSCRIPTION_UNSUBSCRIBE)) {
 			$this->trigger(self::EVENT_AFTER_SUBSCRIPTION_UNSUBSCRIBE, $eventData);
+		}
+
+		return true;
+	}
+
+	public function reactivateSubscription(Subscription $subscription): bool
+	{
+		$subscription->isCanceled = false;
+		$subscription->dateCanceled = null;
+		$subscription->dateExpired = null;
+
+		$now = new DateTime();
+
+		if($now > $subscription->nextPaymentDate){
+			$subscription->dateStarted = $now;
+		}
+
+		try {
+			Craft::$app->getElements()->saveElement($subscription, false);
+		} catch (Throwable $exception) {
+			Craft::warning('Failed to reactivate subscription ' . $subscription->reference . ': ' . $exception->getMessage());
+
+			throw new SubscriptionException(Craft::t('commerce', 'Unable to reactivate subscription at this time.'));
+		}
+
+		$eventData = new SubscriptionResubscribeEvent([
+			'subscription' => $subscription,
+		]);
+
+		if ($this->hasEventHandlers(self::EVENT_AFTER_SUBSCRIPTION_RESUBSCRIBE)) {
+			$this->trigger(self::EVENT_AFTER_SUBSCRIPTION_RESUBSCRIBE, $eventData);
 		}
 
 		return true;

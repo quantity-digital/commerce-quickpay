@@ -9,6 +9,8 @@ use craft\commerce\records\Transaction;
 use craft\db\Query;
 use craft\elements\db\ElementQueryInterface;
 use craft\elements\User;
+use craft\gql\TypeManager;
+use craft\gql\types\DateTime as TypesDateTime;
 use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
@@ -114,11 +116,20 @@ class Subscription extends Element
 	public $_subscriptionData;
 
 	public $cardExpireYear;
+
 	public $cardExpireMonth;
+
 	public $cardLast4;
+
 	public $cardBrand;
-	public $dateStarted;
+
 	public $quickpayReference;
+
+	/**
+	 * @var DateTime Time when subscription expired
+	 */
+	public $dateStarted;
+
 
 
 	/**
@@ -587,6 +598,17 @@ class Subscription extends Element
 	{
 		return Carbon::instance($this->dateStarted)->addDay($this->trialDays);
 	}
+
+	 public static function getFieldDefinitions(): array
+    {
+        return TypeManager::prepareFieldDefinitions(array_merge(parent::getFieldDefinitions(), [
+            'dateStarted' => [
+                'name' => 'dateUpdated',
+                'type' => TypesDateTime::getType(),
+                'description' => 'The date the element was last updated.'
+            ],
+        ]), self::getName());
+    }
 
 	/**
 	 * @inheritdoc

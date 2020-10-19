@@ -115,6 +115,7 @@ class SubscriptionsCallbackController extends BaseController
 			$subscription->cardExpireMonth = $metdata->exp_month;
 			$subscription->cardLast4 = $metdata->last4;
 			$subscription->cardBrand = $metdata->brand;
+			$subscription->isSuspended = false;
 			Craft::$app->getElements()->saveElement($subscription, false);
 		}
 
