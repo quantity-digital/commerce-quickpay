@@ -306,14 +306,14 @@ class Subscriptions extends Component
 		$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
 		$transaction->message = 'Authorizing recurring payment';
 		$transaction->amount = $eventData->amount;
-
+,
 		$headers = [
-			'QuickPay-Callback-Url: http://a7ee4777fc9a.ngrok.io/quickpay/callbacks/recurring/notify/' . $transaction->hash
+			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $transaction->hash)
 		];
 
 		$response = $this->api->setHeaders($headers)->post("/subscriptions/{$subscription->quickpayReference}/recurring", [
 			'amount' => $eventData->amount * 100,
-			'order_id' => time(),
+			'order_id' => $orderId,
 			'auto_capture' => Craft::parseEnv($gateway->autoCapture)
 		]);
 
