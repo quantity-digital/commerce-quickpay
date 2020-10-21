@@ -306,7 +306,7 @@ class Subscriptions extends Component
 		$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
 		$transaction->message = 'Authorizing recurring payment';
 		$transaction->amount = $eventData->amount;
-,
+
 		$headers = [
 			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $transaction->hash)
 		];
