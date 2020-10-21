@@ -3,6 +3,9 @@
 namespace QD\commerce\quickpay;
 
 use Craft;
+use craft\commerce\elements\db\OrderQuery;
+use craft\commerce\elements\Order;
+use craft\commerce\events\DefaultOrderStatusEvent;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\events\PluginEvent;
@@ -10,14 +13,18 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\services\Plugins;
 use craft\web\UrlManager;
 use craft\commerce\services\Gateways;
+use craft\commerce\services\OrderStatuses;
 use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\commerce\services\Purchasables;
+use craft\events\DefineBehaviorsEvent;
 use craft\services\Elements;
 use craft\services\Fields;
 use craft\services\Sites;
 use craft\web\twig\variables\CraftVariable;
 use QD\commerce\quickpay\base\PluginTrait;
+use QD\commerce\quickpay\behaviors\OrderBehavior;
+use QD\commerce\quickpay\behaviors\OrderQueryBehavior;
 use QD\commerce\quickpay\elements\Plan;
 use QD\commerce\quickpay\elements\Subscription;
 use QD\commerce\quickpay\fields\Plans;
@@ -44,7 +51,7 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritDoc
 	 */
-	public $schemaVersion = '2.1';
+	public $schemaVersion = '2.2';
 	public $hasCpSettings = false;
 	public $hasCpSection = true;
 
@@ -62,6 +69,10 @@ class Plugin extends \craft\base\Plugin
 
 		$this->initComponents();
 
+		// $subscription = Subscription::find()->id(287)->one();
+		// Plugin::getInstance()->getSubscriptions()->captureSubscription($subscription);
+		// die;
+
 		self::$commerceInstalled = class_exists(CommercePlugin::class);
 
 		// Install event listeners
@@ -76,24 +87,14 @@ class Plugin extends \craft\base\Plugin
 			}
 		);
 
-		Event::on(
-			CraftVariable::class,
-			CraftVariable::EVENT_INIT,
-			function (Event $event) {
-				/** @var CraftVariable $variable */
-				$variable = $event->sender;
-				$variable->attachBehavior('plans', PlansVariable::class);
-			}
-		);
-
-		Event::on(
-			Plugins::class,
-			Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-			function (PluginEvent $event) {
-				if ($event->plugin === $this) {
-				}
-			}
-		);
+		// Event::on(
+		// 	Plugins::class,
+		// 	Plugins::EVENT_AFTER_INSTALL_PLUGIN,
+		// 	function (PluginEvent $event) {
+		// 		if ($event->plugin === $this) {
+		// 		}
+		// 	}
+		// );
 	}
 
 	private function registerElementTypes()
@@ -140,6 +141,35 @@ class Plugin extends \craft\base\Plugin
 				// Install these only after all other plugins have loaded
 				$request = Craft::$app->getRequest();
 
+				/**
+				 * Order element behaviours
+				 */
+				Event::on(
+					Order::class,
+					Order::EVENT_DEFINE_BEHAVIORS,
+					function (DefineBehaviorsEvent $e) {
+						$e->behaviors['commerce-quickpay.attributes'] = OrderBehavior::class;
+					}
+				);
+
+				Event::on(
+					OrderQuery::class,
+					OrderQuery::EVENT_DEFINE_BEHAVIORS,
+					function (DefineBehaviorsEvent $e) {
+						$e->behaviors['commerce-quickpay.queryparams'] = OrderQueryBehavior::class;
+					}
+				);
+
+				Event::on(
+					CraftVariable::class,
+					CraftVariable::EVENT_INIT,
+					function (Event $event) {
+						/** @var CraftVariable $variable */
+						$variable = $event->sender;
+						$variable->attachBehavior('plans', PlansVariable::class);
+					}
+				);
+
 				if ($request->getIsSiteRequest() && !$request->getIsConsoleRequest()) {
 					$this->installSiteEventListeners();
 				}
@@ -166,9 +196,15 @@ class Plugin extends \craft\base\Plugin
 				$event->rules = array_merge($event->rules, [
 					'quickpay/callbacks/payments/continue/<transactionReference>' => 'commerce-quickpay/payments-callback/continue',
 					'quickpay/callbacks/payments/notify/<transactionReference>' => 'commerce-quickpay/payments-callback/notify',
+
 					'quickpay/callbacks/subscriptions/continue/<transactionReference>' => 'commerce-quickpay/subscriptions-callback/continue',
 					'quickpay/callbacks/subscriptions/notify/<transactionReference>' => 'commerce-quickpay/subscriptions-callback/notify',
-					'quickpay/cron/subscriptions/capture' => 'commerce-quickpay/cron/capture'
+
+					'quickpay/callbacks/recurring/notify/<transactionReference>' => 'commerce-quickpay/recurring-callback/notify',
+
+					'quickpay/cron/subscriptions/capture' => 'commerce-quickpay/subscriptions-cron/capture',
+					'quickpay/cron/subscriptions/create-order' => 'commerce-quickpay/subscriptions-cron/create-order',
+					'quickpay/cron/subscriptions/authorize' => 'commerce-quickpay/subscriptions-cron/authorize'
 				]);
 			}
 		);

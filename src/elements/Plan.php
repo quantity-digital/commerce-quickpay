@@ -422,12 +422,19 @@ class Plan extends Purchasable
 
 	public function getPrice(): float
 	{
+		//If override price is set
+		if($this->price){
+			return $this->price;
+		}
+
+		//If no override price is set, calculate from purchasables
 		$price = 0;
 		$qtys = $this->getQtys();
 		foreach ($this->getPurchasables() as $purchable) {
 			$price += $purchable->price * $qtys[$purchable->id];
 		}
-		return $this->price;
+
+		return $price;
 	}
 
 	public function getSku(): string
@@ -544,6 +551,7 @@ class Plan extends Purchasable
 	public function populateLineItem(LineItem $lineItem)
 	{
 		$errors = [];
+
 		if ($lineItem->purchasable === $this) {
 
 			if (isset($lineItem->snapshot['options']['qty'])) {
@@ -558,6 +566,7 @@ class Plan extends Purchasable
 				$lineItem->salePrice = $price;
 			}
 		}
+
 		if ($errors) {
 			$cart = Commerce::getInstance()->getCarts()->getCart();
 			$cart->addErrors($errors);

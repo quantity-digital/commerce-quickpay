@@ -2,53 +2,16 @@
 <h2>Order status handling</h2>
 <div class="flex-fields">
 	<div class="field width-50">
-		{{ lightswitchField({
-			label: "Auto capture on status change"|t,
-			id: 'autoCapture',
-			name: 'autoCapture',
-			instructions: "If checked, payment will be autocaptured when status is changed"|t('commerce-quickpay'),
-			value: 1,
-			errors: gateway.getErrors('autoCapture'),
-			on: (gateway.autoCapture is defined) ? gateway.autoCapture : 0,
-			toggle : 'autoCaptureToggle'
-		}) }}
-
-		<div id="autoCaptureToggle" {% if gateway.autoCapture is not defined or not gateway.autoCapture %} class="hidden" {% endif %}>
+		<div>
 			{{ selectField({
 				first: true,
-				label: 'Auto capture status'|t('commerce-quickpay'),
-				instructions: 'On what status should the payment be auto captured'|t('commerce-quickpay'),
-				id: 'autoCaptureStatus',
-				name: 'autoCaptureStatus',
+				label: 'Payment order status'|t('commerce-quickpay'),
+				instructions: 'What status should payment orders have'|t('commerce-quickpay'),
+				id: 'paymentOrderStatus',
+				name: 'paymentOrderStatus',
 				options : statusOptions,
-				value : gateway.autoCaptureStatus,
-				errors: gateway.getErrors('autoCaptureStatus') ?? null,
-			}) }}
-		</div>
-	</div>
-
-	<div class="field width-50">
-		{{ lightswitchField({
-			label: "Auto status after capture"|t,
-			id: 'enableAutoStatus',
-			name: 'enableAutoStatus',
-			instructions: "If enabled, the order status will update after capture is complete"|t('commerce-quickpay'),
-			value: 1,
-			errors: gateway.getErrors('enableAutoStatus'),
-			on: (gateway.enableAutoStatus is defined) ? gateway.enableAutoStatus : 0,
-			toggle : 'autoStatusToggle'
-		}) }}
-
-		<div id="autoStatusToggle" {% if gateway.enableAutoStatus is not defined or not gateway.enableAutoStatus %} class="hidden" {% endif %}>
-			{{ selectField({
-				first: true,
-				label: 'Status after capture'|t('commerce-quickpay'),
-				instructions: 'What will the status be after capture'|t('commerce-quickpay'),
-				id: 'afterCaptureStatus',
-				name: 'afterCaptureStatus',
-				options : statusOptions,
-				value : gateway.afterCaptureStatus,
-				errors: gateway.getErrors('afterCaptureStatus') ?? null,
+				value : gateway.paymentOrderStatus,
+				errors: gateway.getErrors('paymentOrderStatus') ?? null,
 			}) }}
 		</div>
 	</div>

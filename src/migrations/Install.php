@@ -6,6 +6,7 @@ use Craft;
 use craft\commerce\db\Table as DbTable;
 use craft\db\Migration;
 use craft\db\Table as CraftDbTable;
+use craft\commerce\db\Table as CommerceDbTable;
 use QD\commerce\quickpay\base\Table;
 
 class Install extends Migration
@@ -127,6 +128,12 @@ class Install extends Migration
 			'dateUpdated' => $this->dateTime()->notNull(),
 			'uid' => $this->uid(),
 		]);
+
+		$this->createTable(Table::ORDERINFO, [
+            'id' => $this->integer()->notNull(),
+            'subscriptionId' => $this->integer()->null(),
+            'PRIMARY KEY([[id]])',
+        ]);
 	}
 
 	protected function createIndexes()
@@ -182,6 +189,10 @@ class Install extends Migration
 		//Sites
 		$this->addForeignKey(null, Table::PLANTYPES_SITES, 'siteId', CraftDbTable::SITES, 'id', 'CASCADE', 'CASCADE');
 		$this->addForeignKey(null, Table::PLANTYPES_SITES, 'planTypeId', Table::PLANTYPES, 'id', 'CASCADE', null);
+
+		//Orderinfo
+		$this->addForeignKey(null, Table::ORDERINFO, ['id'], CommerceDbTable::ORDERS, ['id'], 'CASCADE', 'CASCADE');
+		$this->addForeignKey(null, Table::ORDERINFO, ['subscriptionId'], Table::SUBSCRIPTIONS, ['id'], 'CASCADE', 'CASCADE');
 	}
 
 	protected function dropForeignKeys()
@@ -202,6 +213,9 @@ class Install extends Migration
 
 		$this->dropForeignKey('quickpay_plantypes_sites_planTypeId_fk',Table::PLANTYPES_SITES);
 		$this->dropForeignKey('quickpay_plantypes_sites_siteId_fk',Table::PLANTYPES_SITES);
+
+		$this->dropForeignKey('quickpay_orderinfo_id_fk',Table::ORDERINFO);
+		$this->dropForeignKey('quickpay_orderinfo_subscriptionId_fk',Table::ORDERINFO);
 	}
 
 	protected function dropTables()
@@ -211,5 +225,6 @@ class Install extends Migration
 		$this->dropTableIfExists(Table::PLANTYPES);
 		$this->dropTableIfExists(Table::PURCHASABLES);
 		$this->dropTableIfExists(Table::SUBSCRIPTIONS);
+		$this->dropTableIfExists(Table::ORDERINFO);
 	}
 }

@@ -9,6 +9,7 @@ use craft\commerce\elements\Order;
 use craft\commerce\errors\SubscriptionException;
 use craft\commerce\events\SubscriptionEvent;
 use craft\commerce\models\Transaction;
+use craft\commerce\Plugin as CommercePlugin;
 use craft\elements\User;
 use craft\helpers\Db;
 use DateTime;
@@ -19,11 +20,19 @@ use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\SubscriptionResponse;
 use QD\commerce\quickpay\responses\CaptureResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
+use craft\commerce\services\Gateways;
 use craft\helpers\Json;
+use craft\helpers\UrlHelper;
 use Exception;
+use QD\commerce\quickpay\events\SubscriptionAuthorizeEvent;
 use QD\commerce\quickpay\events\SubscriptionCaptureEvent;
+use QD\commerce\quickpay\events\SubscriptionRecurringEvent;
 use QD\commerce\quickpay\events\SubscriptionResubscribeEvent;
 use QD\commerce\quickpay\events\SubscriptionUnsubscribeEvent;
+use QD\commerce\quickpay\gateways\Subscriptions as GatewaysSubscriptions;
+use QD\commerce\quickpay\responses\PaymentResponse;
+use QD\commerce\quickpay\responses\RefundResponse;
+use QD\commerce\quickpay\responses\SubscriptionCaptureResponse;
 use Throwable;
 
 class Subscriptions extends Component
@@ -34,9 +43,11 @@ class Subscriptions extends Component
 	const EVENT_BEFORE_SAVE_SUBSCRIPTION = 'beforeSaveSubscription';
 	const EVENT_AFTER_COMPLETED_SUBSCRIPTION_CAPTURE = 'afterCompletedeSubscriptionCapture';
 	const EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE = 'afterFailedSubscriptionCapture';
-	const EVENT_BEFORE_SUBSCRIPTION_CAPTURE = 'afterBeforeSubscriptionCapture';
 	const EVENT_AFTER_SUBSCRIPTION_UNSUBSCRIBE = 'afterSubscriptionUnsubscribe';
 	const EVENT_AFTER_SUBSCRIPTION_RESUBSCRIBE = 'afterSubscriptionResubscribe';
+
+	const EVENT_BEFORE_SUBSCRIPTION_CAPTURE = 'afterBeforeSubscriptionCapture';
+	const EVENT_BEFORE_RECURRING_AUTHORIZE = 'beforeRecurringAuthorize';
 
 	public $api;
 
@@ -45,7 +56,8 @@ class Subscriptions extends Component
 		$this->api = Plugin::$plugin->getApi();
 	}
 
-	public function getSubscriptionById($orderId){
+	public function getSubscriptionById($orderId)
+	{
 		return Subscription::find()->anyStatus()->orderId($orderId)->one();
 	}
 
@@ -111,6 +123,15 @@ class Subscriptions extends Component
 
 	public function createSubscription(User $user, Plan $plan, Order $order, array $subscriptionData = [], array $fieldValues = []): Subscription
 	{
+		$gateway = $order->getGateway();
+		$paymentOrderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
+
+		//This is a payment order, so ignore the create subscription
+		if ($order->orderStatusId == $paymentOrderStatus) {
+			return false;
+		}
+
+		//Create new subscription
 		$subscription = new Subscription();
 		$subscription->userId = $user->id;
 		$subscription->planId = $plan->id;
@@ -125,8 +146,8 @@ class Subscriptions extends Component
 		$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
 
 		//If authorized subscription exists, store the data
-		if($transaction){
-			$response = Json::decode($transaction->response,false);
+		if ($transaction) {
+			$response = Json::decode($transaction->response, false);
 			$metdata = $response->metadata;
 
 			$subscription->quickpayReference = $transaction->reference;
@@ -140,7 +161,7 @@ class Subscriptions extends Component
 		$event =  new SubscriptionEvent([
 			'subscription' => $subscription
 		]);
-		$this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION,$event);
+		$this->trigger(self::EVENT_BEFORE_SAVE_SUBSCRIPTION, $event);
 
 		Craft::$app->getElements()->saveElement($event->subscription, false);
 
@@ -149,7 +170,7 @@ class Subscriptions extends Component
 
 	public function calculateNextPaymentDate($subscription)
 	{
-		$subscription->dateStarted = DateTime::createFromFormat('Y-m-j H:i:s',$subscription->dateStarted);
+		$subscription->dateStarted = DateTime::createFromFormat('Y-m-j H:i:s', $subscription->dateStarted);
 		$dateStarted = $subscription->dateStarted->format('d');
 
 		$monthLength = $subscription->dateStarted->format('t');
@@ -234,7 +255,7 @@ class Subscriptions extends Component
 
 		$now = new DateTime();
 
-		if($now > $subscription->nextPaymentDate){
+		if ($now > $subscription->nextPaymentDate) {
 			$subscription->dateStarted = $now;
 		}
 
@@ -257,103 +278,108 @@ class Subscriptions extends Component
 		return true;
 	}
 
-	public function captureSubscription(Subscription $subscription)
+	//Recurring transaction functions
+	public function createRecurring($order, $subscription)
 	{
-		$subscriptionData = $subscription->subscriptionData;
-		$subscriptionQtys = isset($subscriptionData['qty']) ? $subscriptionData['qty'] : [];
+		$gateway = $subscription->order->getGateway();
+		$this->api->setGateway($gateway);
 
-		$plan = $subscription->plan;
-		$purchasables = $plan->getPurchasables();
-		$qtys = $plan->getQtys();
-		$amount = 0;
+		$eventData = new SubscriptionRecurringEvent([
+			'subscription' => $subscription,
+			'amount' => $order->totalPrice,
+			'order' => $order
+		]);
 
-		foreach ($purchasables as $purchasable) {
-			if (isset($subscriptionQtys[$purchasable->id])) {
-				$qty = $subscriptionQtys[$purchasable->id];
-			} else {
-				$qty = $qtys[$purchasable->id];
-			}
-			$amount += $qty * $purchasable->price;
+		if ($this->hasEventHandlers(self::EVENT_BEFORE_RECURRING_AUTHORIZE)) {
+			$this->trigger(self::EVENT_BEFORE_RECURRING_AUTHORIZE, $eventData);
 		}
 
-		$eventData = new SubscriptionCaptureEvent([
-			'subscription' => $subscription,
+		$orderId = $order->reference;
+		if (strlen($orderId) < 4) {
+			while (strlen($orderId) < 4) {
+				$orderId = '0' . $orderId;
+			}
+		}
+
+		$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order);
+		$transaction->status = \craft\commerce\records\Transaction::STATUS_PENDING;
+		$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
+		$transaction->message = 'Authorizing recurring payment';
+		$transaction->amount = $eventData->amount;
+
+		$headers = [
+			'QuickPay-Callback-Url: http://a7ee4777fc9a.ngrok.io/quickpay/callbacks/recurring/notify/' . $transaction->hash
+		];
+
+		$response = $this->api->setHeaders($headers)->post("/subscriptions/{$subscription->quickpayReference}/recurring", [
+			'amount' => $eventData->amount * 100,
+			'order_id' => time(),
+			'auto_capture' => Craft::parseEnv($gateway->autoCapture)
+		]);
+
+		$recurringResponse = new SubscriptionResponse($response);
+		$transaction->reference = $recurringResponse->getTransactionReference();
+		$transaction->response = $recurringResponse->getData();
+		CommercePlugin::getInstance()->transactions->saveTransaction($transaction);
+
+		return $transaction;
+	}
+
+	public function captureFromGateway($transaction)
+	{
+		$order = $transaction->getOrder();
+
+		$gateway = $order->getGateway();
+		$this->api->setGateway($gateway);
+
+		$authorizedTransation = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
+		$authorizedAmount     = (int)$transaction->amount;
+		$amount               = $order->getOutstandingBalance();
+
+		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
+		if ($authorizedAmount < $amount) {
+			$amount = $authorizedAmount;
+		}
+
+		if ($authorizedAmount > $amount) {
+			$transaction->amount = $amount;
+			$transaction->paymentAmount = $amount;
+		}
+
+		$response = Plugin::$plugin->api->post("/payments/{$authorizedTransation->reference}/capture", [
+			'amount' => $amount * 100
+		]);
+
+		return new CaptureResponse($response);
+	}
+
+	public function refundFromGateway(Transaction $transaction): RefundResponse
+	{
+		$amount     = (int)$transaction->amount * 100;
+		$response = Plugin::$plugin->api->post("/payments/{$transaction->reference}/refund", [
 			'amount' => $amount
 		]);
 
-		if ($this->hasEventHandlers(self::EVENT_BEFORE_SUBSCRIPTION_CAPTURE)) {
-			$this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CAPTURE, $eventData);
-		}
-
-		try {
-			$order = $eventData->subscription->order;
-			$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
-			$captureResponse = $this->captureFromGateway($transaction, $eventData->amount);
-
-			if ($captureResponse->isSuccessful()) {
-				$eventData->subscription->nextPaymentDate = $this->calculateNextPaymentDate($eventData->subscription);
-				$eventData->subscription->isSuspended = false;
-
-				// Allow plugins to be triggered on successfull capture
-				if ($this->hasEventHandlers(self::EVENT_AFTER_COMPLETED_SUBSCRIPTION_CAPTURE)) {
-					$this->trigger(self::EVENT_AFTER_COMPLETED_SUBSCRIPTION_CAPTURE, $eventData);
-				}
-			}
-
-			if (!$captureResponse->isSuccessful()) {
-				$eventData->subscription->isSuspended = true;
-
-				// Allow plugins to be triggered on failed capture
-				if ($this->hasEventHandlers(self::EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE)) {
-					$this->trigger(self::EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE, $eventData);
-				}
-			}
-
-			Craft::$app->getElements()->saveElement($eventData->subscription, false);
-		} catch (Exception $e) {
-			//TODO
-		}
+		return new RefundResponse($response);
 	}
 
-	public function captureFromGateway(Transaction $authorizedTransation, $amount)
+	public function getGateway(): GatewaysSubscriptions
 	{
-		$order 		= $authorizedTransation->getOrder();
-		$parentId = $authorizedTransation->parentId;
-		$this->api->setGateway($authorizedTransation->getGateway());
+		$gateways = new Gateways();
+		$quickpayGateway = null;
 
-		$response = $this->api->post("/subscriptions/{$authorizedTransation->reference}/recurring", [
-			'amount' => $amount * 100,
-			'order_id' => time(),
-			'auto_capture' => 'true'
-		]);
+		foreach ($gateways->getAllCustomerEnabledGateways() as $gateway) {
 
-		$captureResponse = new CaptureResponse($response);
-		$transaction = new TransactionRecord();
-
-		if ($captureResponse->isSuccessful()) {
-			$transaction->status = TransactionRecord::STATUS_SUCCESS;
-		} elseif ($captureResponse->isProcessing()) {
-			$transaction->status = TransactionRecord::STATUS_PROCESSING;
-		} elseif ($captureResponse->isRedirect()) {
-			$transaction->status = TransactionRecord::STATUS_REDIRECT;
-		} else {
-			$transaction->status = TransactionRecord::STATUS_FAILED;
+			if ($gateway instanceof GatewaysSubscriptions) {
+				$quickpayGateway = $gateway;
+				break;
+			}
 		}
 
-		$transaction->paymentAmount = $amount;
-		$transaction->amount = $amount;
-		$transaction->type = 'capture';
-		$transaction->parentId = $parentId;
-		$transaction->response = $captureResponse->getData();
-		$transaction->code = $captureResponse->getCode();
-		$transaction->reference = $captureResponse->getTransactionReference();
-		$transaction->message = $captureResponse->getMessage();
-		$transaction->orderId = $order->id;
-		$transaction->gatewayId = $order->gatewayId;
-		$transaction->paymentCurrency = $order->paymentCurrency;
-		$transaction->currency = $order->paymentCurrency;
-		$transaction->save(false);
+		if (!$quickpayGateway) {
+			throw new Exception('The Quickpay gateway is not setup correctly.');
+		}
 
-		return $captureResponse;
+		return $gateway;
 	}
 }

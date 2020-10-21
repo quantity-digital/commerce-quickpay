@@ -9,4 +9,5 @@ abstract class Table
     const PLANTYPES_SITES = '{{%quickpay_plantypes_sites}}';
     const PURCHASABLES = '{{%quickpay_purchasables}}';
     const SUBSCRIPTIONS = '{{%quickpay_subscriptions}}';
+	const ORDERINFO = '{{%quickpay_orderinfo}}';
 }

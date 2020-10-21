@@ -22,8 +22,8 @@ class Subscriptions extends BaseGateway
 		'CompletePurchase' => false,
 		'PaymentSources' => false,
 		'Purchase' => false,
-		'Refund' => false,
-		'PartialRefund' => false,
+		'Refund' => true,
+		'PartialRefund' => true,
 		'Void' => false,
 		'Webhooks' => false,
 	];
@@ -39,12 +39,13 @@ class Subscriptions extends BaseGateway
 	public $private_key;
 	public $analyticsId;
 	public $brandingId;
-	public $autoCapture;
+	public $autoCapture = 1;
 	public $autoCaptureStatus;
 	public $enableAutoStatus;
 	public $afterCaptureStatus;
 	public $paymentMethods;
 	public $enabled3ds;
+	public $paymentOrderStatus;
 
 	// Settings
 	// =========================================================================
@@ -74,7 +75,7 @@ class Subscriptions extends BaseGateway
 
 		foreach (CommercePlugin::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
 			$statusOptions[] = [
-				'value' => $status->handle,
+				'value' => $status->id,
 				'label' => $status->displayName
 			];
 		}
@@ -133,7 +134,7 @@ class Subscriptions extends BaseGateway
 	 */
 	public function capture(Transaction $transaction, string $reference): RequestResponseInterface
 	{
-		$response = Plugin::$plugin->getPayments()->captureFromGateway($transaction);
+		$response = Plugin::$plugin->getSubscriptions()->captureFromGateway($transaction);
 
 		return $response;
 	}

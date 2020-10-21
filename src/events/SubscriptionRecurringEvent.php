@@ -3,11 +3,12 @@ namespace QD\commerce\quickpay\events;
 
 use yii\base\Event;
 
-class SubscriptionCaptureEvent extends Event
+class SubscriptionRecurringEvent extends Event
 {
     // Properties
     // =========================================================================
 
     public $subscription;
+	public $amount;
 	public $order;
 }

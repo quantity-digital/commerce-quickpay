@@ -104,7 +104,7 @@ class SubscriptionRequestModel extends Model
 		}
 
 		//For testing only
-		$payload['callback_url'] = str_replace('localhost:8002', 'e83a897cf7a7.ngrok.io', $payload['callback_url']);
+		$payload['callback_url'] = str_replace('localhost:8002', 'a7ee4777fc9a.ngrok.io', $payload['callback_url']);
 
 		return $payload;
 	}

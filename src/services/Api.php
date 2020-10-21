@@ -28,6 +28,13 @@ class Api extends Component
 		return $this;
 	}
 
+	public function get($url, $payload = [])
+	{
+		$response = $this->client->request->get($url, $payload);
+
+		return $response->asObject();
+	}
+
 	public function post($url, $payload = [])
 	{
 		$response = $this->client->request->post($url, $payload);
@@ -44,6 +51,11 @@ class Api extends Component
 		}
 
 		//TODO Handle error in request
+	}
+
+	public function setHeaders($headers){
+		$this->client->setHeaders($headers);
+		return $this;
 	}
 
 	private function getApiKey()

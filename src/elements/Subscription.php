@@ -5,6 +5,7 @@ namespace QD\commerce\quickpay\elements;
 use Carbon\Carbon;
 use Craft;
 use craft\base\Element;
+use craft\commerce\elements\Order;
 use craft\commerce\records\Transaction;
 use craft\db\Query;
 use craft\elements\db\ElementQueryInterface;
@@ -246,7 +247,8 @@ class Subscription extends Element
 	 */
 	public function getTrialExpires()
 	{
-		return Carbon::parse($this->dateStarted->format('Y-m-d H:i'))->addDay($this->trialDays)->format('Y-m-d H:i');
+
+		return Carbon::parse($this->dateStarted)->addDay($this->trialDays)->format('Y-m-d H:i');
 	}
 
 	/**
@@ -286,30 +288,6 @@ class Subscription extends Element
 		return (string)$this->getPlan();
 	}
 
-	// /**
-	//  * Returns possible alternative plans for this subscription
-	//  *
-	//  * @return Plan[]
-	//  */
-	// public function getAlternativePlans(): array
-	// {
-	// 	$plans = Plugin::getInstance()->getPlans()->getAllGatewayPlans($this->gatewayId);
-
-	// 	/** @var Plan $currentPlan */
-	// 	$currentPlan = $this->getPlan();
-
-	// 	$alternativePlans = [];
-
-	// 	foreach ($plans as $plan) {
-	// 		// For all plans that are not the current plan
-	// 		if ($plan->id !== $currentPlan->id && $plan->canSwitchFrom($currentPlan)) {
-	// 			$alternativePlans[] = $plan;
-	// 		}
-	// 	}
-
-	// 	return $alternativePlans;
-	// }
-
 	/**
 	 * @inheritdoc
 	 */
@@ -338,15 +316,18 @@ class Subscription extends Element
 	 * @return SubscriptionPayment[]
 	 * @throws InvalidConfigException
 	 */
-	public function getAllPayments(): array
+	public function getAllPayments()
 	{
-		$order = $this->Order;
-		$transactions = $order->getTransactions();
+		$orders = Order::find()->subscriptionId(287)->all();
+
 		$payments = [];
 
-		foreach ($transactions as $transaction){
-			if($transaction->type === Transaction::TYPE_CAPTURE){
-				$payments[] = $transaction;
+		foreach ($orders as $order) {
+			$transactions = $order->getTransactions();
+			foreach ($transactions as $transaction) {
+				if ($transaction->type === Transaction::TYPE_CAPTURE) {
+					$payments[] = $transaction;
+				}
 			}
 		}
 
@@ -585,7 +566,7 @@ class Subscription extends Element
 			$subscriptionRecord->nextPaymentDate = $this->calculateFirstPaymentDate($this->trialDays);
 		}
 
-		if(!$isNew){
+		if (!$isNew) {
 			$subscriptionRecord->nextPaymentDate = $this->nextPaymentDate;
 		}
 
@@ -596,19 +577,19 @@ class Subscription extends Element
 
 	public function calculateFirstPaymentDate()
 	{
-		return Carbon::instance($this->dateStarted)->addDay($this->trialDays);
+		return Carbon::parse($this->dateStarted)->addDay($this->trialDays);
 	}
 
-	 public static function getFieldDefinitions(): array
-    {
-        return TypeManager::prepareFieldDefinitions(array_merge(parent::getFieldDefinitions(), [
-            'dateStarted' => [
-                'name' => 'dateUpdated',
-                'type' => TypesDateTime::getType(),
-                'description' => 'The date the element was last updated.'
-            ],
-        ]), self::getName());
-    }
+	public static function getFieldDefinitions(): array
+	{
+		return TypeManager::prepareFieldDefinitions(array_merge(parent::getFieldDefinitions(), [
+			'dateStarted' => [
+				'name' => 'dateUpdated',
+				'type' => TypesDateTime::getType(),
+				'description' => 'The date the element was last updated.'
+			],
+		]), self::getName());
+	}
 
 	/**
 	 * @inheritdoc
