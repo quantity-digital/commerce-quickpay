@@ -99,6 +99,10 @@ class SubscriptionQuery extends ElementQuery
      */
     public $dateExpired;
 
+	public $cardExpireYear;
+
+	public $cardExpireMonth;
+
     /**
      * @var array
      */
@@ -346,6 +350,18 @@ class SubscriptionQuery extends ElementQuery
         return $this;
     }
 
+	public function cardExpireYear($value){
+		$this->cardExpireYear = $value;
+
+		return $this;
+	}
+
+	public function cardExpireMonth($value){
+		$this->cardExpireMonth = $value;
+
+		return $this;
+	}
+
     /**
      * Narrows the query results based on the {elements}’ statuses.
      *
@@ -433,6 +449,14 @@ class SubscriptionQuery extends ElementQuery
         if ($this->dateExpired) {
             $this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateExpired', $this->dateExpired));
         }
+
+		if ($this->cardExpireMonth){
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.cardExpireMonth', $this->cardExpireMonth));
+		}
+
+		if ($this->cardExpireYear){
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.cardExpireYear', $this->cardExpireYear));
+		}
 
         if ($this->onTrial === true) {
             $this->subQuery->andWhere($this->_getTrialCondition(true));
