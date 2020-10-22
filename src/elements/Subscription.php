@@ -318,7 +318,7 @@ class Subscription extends Element
 	 */
 	public function getAllPayments()
 	{
-		$orders = Order::find()->subscriptionId(287)->all();
+		$orders = Order::find()->subscriptionId($this->id)->all();
 
 		$payments = [];
 
