@@ -451,11 +451,11 @@ class SubscriptionQuery extends ElementQuery
         }
 
 		if ($this->cardExpireMonth){
-			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.cardExpireMonth', $this->cardExpireMonth));
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.cardExpireMonth', $this->cardExpireMonth));
 		}
 
 		if ($this->cardExpireYear){
-			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.cardExpireYear', $this->cardExpireYear));
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.cardExpireYear', $this->cardExpireYear));
 		}
 
         if ($this->onTrial === true) {
