@@ -577,7 +577,7 @@ class Subscription extends Element
 
 	public function calculateFirstPaymentDate()
 	{
-		return Carbon::parse($this->dateStarted)->addDay($this->trialDays);
+		return Carbon::instance($this->dateStarted)->addDay($this->trialDays);
 	}
 
 	public static function getFieldDefinitions(): array
