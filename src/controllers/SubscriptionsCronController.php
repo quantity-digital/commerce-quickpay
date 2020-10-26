@@ -41,6 +41,7 @@ class SubscriptionsCronController extends Controller
 			$order->shippingMethodHandle = $subscription->order->shippingMethodHandle;
 			$order->shippingMethodName = $subscription->order->shippingMethodName;
 			$order->subscriptionId = $subscription->id;
+			$order->couponCode = $subscription->order->couponCode;
 
 			if (!Craft::$app->getElements()->saveElement($order)) {
 				var_dump($order->errors);
