@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.7 - 2020-10-26
+
+### Fixed
+
+* Fixed error in `QD\commerce\quickpay\elements\Plan` where `afterOrderComplete` wasnt passing the cancelable event to the trigger
+
 ## 2.2.6 - 2020-10-23
 
 ### Fixed

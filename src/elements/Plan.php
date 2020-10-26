@@ -35,7 +35,7 @@ class Plan extends Purchasable
 	const EVENT_BEFORE_SUBSCRIPTION_CREATE = 'beforeLineItemSubscriptionCreate';
 
 	// Public Properties
-    // =========================================================================
+	// =========================================================================
 	public $id;
 	public $typeId;
 	public $taxCategoryId;
@@ -48,7 +48,7 @@ class Plan extends Purchasable
 	public $trialDays;
 
 	// Private Properties
-    // =========================================================================
+	// =========================================================================
 	private $_planType;
 	private $_purchasables;
 	private $_purchasableIds;
@@ -423,7 +423,7 @@ class Plan extends Purchasable
 	public function getPrice(): float
 	{
 		//If override price is set
-		if($this->price){
+		if ($this->price) {
 			return $this->price;
 		}
 
@@ -582,9 +582,12 @@ class Plan extends Purchasable
 	public function afterOrderComplete(Order $order, LineItem $lineItem)
 	{
 		$event = new CancelableEvent();
-		$this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CREATE, new CancelableEvent());
 
-		if(!$event->isValid){
+		if ($this->hasEventHandlers(self::EVENT_BEFORE_SUBSCRIPTION_CREATE)) {
+			$this->trigger(self::EVENT_BEFORE_SUBSCRIPTION_CREATE, $event);
+		}
+
+		if (!$event->isValid) {
 			return;
 		}
 
