@@ -562,8 +562,8 @@ class Plan extends Purchasable
 					$price += $purchable->price * $qtys[$purchable->id];
 				}
 
-				$lineItem->price = $price;
-				$lineItem->salePrice = $price;
+				$lineItem->price = $price * $this->planInterval;
+				$lineItem->salePrice = $price * $this->planInterval;
 			}
 		}
 

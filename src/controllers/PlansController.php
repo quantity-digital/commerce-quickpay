@@ -111,13 +111,11 @@ class PlansController extends Controller
 		}
 
 		$variables['intervalOptions'] = [
-			'daily' => 'Daily',
-			'weekly' => 'Weekly',
-			'monthly' => 'Monthly',
-			'3_months' => 'Every 3 months',
-			'6_months' => 'Every 6 months',
-			'9_months' => 'Every 9 months',
-			'yearly' => 'Yearly'
+			1 => 'Monthly',
+			3 => 'Every 3 months',
+			6 => 'Every 6 months',
+			9 => 'Every 9 months',
+			12 => 'Yearly'
 		];
 
 		return $this->renderTemplate('commerce-quickpay/plans/_edit', $variables);

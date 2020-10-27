@@ -19,20 +19,15 @@ use QD\commerce\quickpay\models\SubscriptionRequestModel;
 use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\SubscriptionResponse;
 use QD\commerce\quickpay\responses\CaptureResponse;
-use craft\commerce\records\Transaction as TransactionRecord;
 use craft\commerce\services\Gateways;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use Exception;
-use QD\commerce\quickpay\events\SubscriptionAuthorizeEvent;
-use QD\commerce\quickpay\events\SubscriptionCaptureEvent;
 use QD\commerce\quickpay\events\SubscriptionRecurringEvent;
 use QD\commerce\quickpay\events\SubscriptionResubscribeEvent;
 use QD\commerce\quickpay\events\SubscriptionUnsubscribeEvent;
 use QD\commerce\quickpay\gateways\Subscriptions as GatewaysSubscriptions;
-use QD\commerce\quickpay\responses\PaymentResponse;
 use QD\commerce\quickpay\responses\RefundResponse;
-use QD\commerce\quickpay\responses\SubscriptionCaptureResponse;
 use Throwable;
 
 class Subscriptions extends Component
@@ -176,47 +171,15 @@ class Subscriptions extends Component
 		$monthLength = $subscription->dateStarted->format('t');
 		$shift = $monthLength - $dateStarted;
 
-		$intervals = [
-			'daily' => '+1 day',
-			'weekly' => '+1 week',
-			'monthly' => 1,
-			'3_months' => 3,
-			'6_months' => 6,
-			'9_months' => 9,
-			'yearly' => 1
-		];
-
 		$planInterval = $subscription->plan->planInterval;
 
 		Carbon::useMonthsOverflow(false);
-		switch ($planInterval) {
-			case 'daily':
-				$dateObject = Carbon::instance($subscription->nextPaymentDate)->addDay(1);
-				break;
+		if ($dateStarted > 28) {
+			$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($planInterval)->lastOfMonth()->subDay($shift);
+		}
 
-			case 'weekly':
-				$dateObject = Carbon::instance($subscription->nextPaymentDate)->addDay(7);
-				break;
-
-			case 'yearly':
-
-				if ($dateStarted > 28) {
-					$dateObject = Carbon::instance($subscription->nextPaymentDate)->addYearNoOverflow($intervals[$planInterval])->lastOfMonth()->subDay($shift);
-					break;
-				}
-
-				$dateObject = Carbon::instance($subscription->nextPaymentDate)->addYearNoOverflow($intervals[$planInterval]);
-				break;
-
-			default:
-
-				if ($dateStarted > 28) {
-					$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($intervals[$planInterval])->lastOfMonth()->subDay($shift);
-					break;
-				}
-
-				$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($intervals[$planInterval]);
-				break;
+		if ($dateStarted <= 28){
+			$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($planInterval);
 		}
 
 		return $dateObject->setTime($subscription->dateStarted->format('H'), $subscription->dateStarted->format('i'));
