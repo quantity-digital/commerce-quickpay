@@ -28,7 +28,7 @@ cd /path/to/my-project.test
 composer require quantity-digital/commerce-quickpay
 
 # tell Craft to install the plugin
-./craft install/plugin quantity-digital/commerce-quickpay
+./craft install/plugin commerce-webshipper
 ```
 
 ## Setup

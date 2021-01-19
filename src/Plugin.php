@@ -5,15 +5,12 @@ namespace QD\commerce\quickpay;
 use Craft;
 use craft\commerce\elements\db\OrderQuery;
 use craft\commerce\elements\Order;
-use craft\commerce\events\DefaultOrderStatusEvent;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
-use craft\events\PluginEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\services\Plugins;
 use craft\web\UrlManager;
 use craft\commerce\services\Gateways;
-use craft\commerce\services\OrderStatuses;
 use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\commerce\services\Purchasables;
@@ -69,10 +66,6 @@ class Plugin extends \craft\base\Plugin
 
 		$this->initComponents();
 
-		// $subscription = Subscription::find()->id(287)->one();
-		// Plugin::getInstance()->getSubscriptions()->captureSubscription($subscription);
-		// die;
-
 		self::$commerceInstalled = class_exists(CommercePlugin::class);
 
 		// Install event listeners
@@ -86,15 +79,6 @@ class Plugin extends \craft\base\Plugin
 				$event->types[] = Plans::class;
 			}
 		);
-
-		// Event::on(
-		// 	Plugins::class,
-		// 	Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-		// 	function (PluginEvent $event) {
-		// 		if ($event->plugin === $this) {
-		// 		}
-		// 	}
-		// );
 	}
 
 	private function registerElementTypes()
@@ -179,12 +163,6 @@ class Plugin extends \craft\base\Plugin
 				}
 			}
 		);
-
-		//Autocapture on statuschange
-		// Event::on(OrderHistories::class, OrderHistories::EVENT_ORDER_STATUS_CHANGE, [$this->getOrders(), 'addAutoCaptureQueue']);
-
-		//Update order status after capture
-		// Event::on(Payments::class, Payments::EVENT_AFTER_CAPTURE_TRANSACTION, [$this->getOrders(), 'addAutoStatusQueue']);
 	}
 
 	protected function installSiteEventListeners()
