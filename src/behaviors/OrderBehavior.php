@@ -33,10 +33,13 @@ class OrderBehavior extends Behavior
 	{
 		// If droppointId is set, store it on the order
 		$request = Craft::$app->getRequest();
-		$subscriptionId = $request->getParam('subscriptionId');
 
-		if ($subscriptionId !== NULL) {
-			$this->subscriptionId = $subscriptionId;
+		if (!$request->getIsConsoleRequest() && \method_exists($request, 'getParam')) {
+			$subscriptionId = $request->getParam('subscriptionId');
+
+			if ($subscriptionId !== NULL) {
+				$this->subscriptionId = $subscriptionId;
+			}
 		}
 	}
 
@@ -49,7 +52,7 @@ class OrderBehavior extends Behavior
 	{
 		$data = [];
 
-		if($this->subscriptionId !== null){
+		if ($this->subscriptionId !== null) {
 			$data['subscriptionId'] = $this->subscriptionId;
 		}
 
@@ -62,9 +65,3 @@ class OrderBehavior extends Behavior
 		}
 	}
 }
-
-
-
-
-
-

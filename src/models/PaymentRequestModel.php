@@ -31,7 +31,7 @@ class PaymentRequestModel extends Model
 	{
 		// Order info
 		$orderId = $this->order->reference;
-		$currency = $this->order->currency;
+		$currency = $this->order->paymentCurrency;
 
 		if ($orderId == null) {
 			$referenceTemplate = CommercePlugin::getInstance()->getSettings()->orderReferenceFormat;
@@ -51,9 +51,9 @@ class PaymentRequestModel extends Model
 			$orderId = $orderId . '-' . $count;
 		}
 
-		if(strlen($orderId) < 4){
-			while(strlen($orderId) < 4){
-				$orderId = '0'. $orderId;
+		if (strlen($orderId) < 4) {
+			while (strlen($orderId) < 4) {
+				$orderId = '0' . $orderId;
 			}
 		}
 
@@ -102,7 +102,7 @@ class PaymentRequestModel extends Model
 		}
 
 		//For testing only
-		$payload['callback_url'] = str_replace('localhost:8002', 'b828403026fd.ngrok.io', $payload['callback_url']);
+		$payload['callback_url'] = str_replace('localhost:8002', 'qddev.ngrok.io', $payload['callback_url']);
 
 		return $payload;
 	}

@@ -5,7 +5,7 @@ namespace QD\commerce\quickpay\controllers;
 use Craft;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
-use craft\console\Controller;
+use craft\web\Controller;
 use craft\db\Query;
 use DateTime;
 use Exception;
