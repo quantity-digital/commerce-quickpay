@@ -2,65 +2,62 @@
 
 namespace QD\commerce\quickpay\services;
 
+use Craft;
 use craft\base\Component;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\records\Transaction as TransactionRecord;
+use QD\commerce\quickpay\gateways\Gateway;
+use QD\commerce\quickpay\queue\CapturePayment;
 
 class Orders extends Component
 {
+    public function addAutoCaptureJob($event)
+    {
+        $order = $event->order;
+        $orderstatus = $order->getOrderStatus();
+        $gateway = $order->getGateway();
 
-	// public function addAutoStatusQueue($event)
-	// {
-	// 	$transaction = $event->transaction;
-	// }
+        if ($gateway instanceof Gateway && $gateway->autoCapture && $gateway->autoCaptureStatus === $orderstatus->handle) {
+            $transaction = $this->getSuccessfulTransactionForOrder($order);
 
-	// public function addAutoCaptureQueue($event)
-	// {
-	// 	$order = $event->order;
-	// 	$orderstatus = $order->getOrderStatus();
-	// 	$gateway = $order->getGateway();
+            if ($transaction && $transaction->canCapture()) {
+                Craft::$app->getQueue()->delay(10)->push(new CapturePayment(
+                    [
+                        'transaction' => $transaction,
+                    ]
+                ));
+            }
+        }
+    }
 
-	// 	if ($gateway instanceof Gateway && $gateway->autoCapture && $gateway->autoCaptureStatus === $orderstatus->handle) {
-	// 		$transaction = $this->getPayments()->getSuccessfulTransactionForOrder($order);
+    public function getOrderById($id)
+    {
+        return CommercePlugin::getInstance()->getOrders()->getOrderById($id);
+    }
 
-	// 		if ($transaction && $transaction->canCapture()) {
-	// 			Craft::$app->getQueue()->delay(10)->push(new CapturePayment(
-	// 				[
-	// 					'transaction' => $transaction,
-	// 				]
-	// 			));
-	// 		}
-	// 	}
-	// }
+    public function getSuccessfulTransactionForOrder(Order $order)
+    {
+        $transactions = $order->getTransactions();
+        usort($transactions, array($this, 'dateCompare'));
 
-	public function getOrderById($id)
-	{
-		return CommercePlugin::getInstance()->getOrders()->getOrderById($id);
-	}
+        foreach ($transactions as $transaction) {
 
-	public function getSuccessfulTransactionForOrder(Order $order)
-	{
-		$transactions = $order->getTransactions();
-		usort($transactions, array($this,'dateCompare'));
+            if (
+                $transaction->status === TransactionRecord::STATUS_SUCCESS
+                && $transaction->type === TransactionRecord::TYPE_AUTHORIZE
+            ) {
+                return $transaction;
+            }
+        }
 
-		foreach ($transactions as $transaction) {
+        return false;
+    }
 
-			if (
-				$transaction->status === TransactionRecord::STATUS_SUCCESS
-				&& $transaction->type === TransactionRecord::TYPE_AUTHORIZE
-			) {
-				return $transaction;
-			}
-		}
-
-		return false;
-	}
-
-	private static function dateCompare($element1, $element2)
-	{
-		$datetime1 = date_timestamp_get($element1['dateCreated']);
-		$datetime2 = date_timestamp_get($element2['dateCreated']);
-		return $datetime2 - $datetime1;
-	}
+    private static function dateCompare($element1, $element2)
+    {
+        $datetime1 = date_timestamp_get($element1['dateCreated']);
+        $datetime2 = date_timestamp_get($element2['dateCreated']);
+        return $datetime2 - $datetime1;
+    }
 }

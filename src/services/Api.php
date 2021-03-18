@@ -10,56 +10,57 @@ use QuickPay\QuickPay;
 class Api extends Component
 {
 
-	private $client;
-	private $gateway;
+    private $client;
+    private $gateway;
 
-	// Public Methods
-	// =========================================================================
+    // Public Methods
+    // =========================================================================
 
-	public function init($gateway = null)
-	{
-	}
+    public function init($gateway = null)
+    {
+    }
 
-	public function setGateway($gateway)
-	{
-		$this->gateway = $gateway;
-		$this->client = new QuickPay(":" . $this->getApiKey());
+    public function setGateway($gateway)
+    {
+        $this->gateway = $gateway;
+        $this->client = new QuickPay(":" . $this->getApiKey());
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function get($url, $payload = [])
-	{
-		$response = $this->client->request->get($url, $payload);
+    public function get($url, $payload = [])
+    {
+        $response = $this->client->request->get($url, $payload);
 
-		return $response->asObject();
-	}
+        return $response->asObject();
+    }
 
-	public function post($url, $payload = [])
-	{
-		$response = $this->client->request->post($url, $payload);
+    public function post($url, $payload = [])
+    {
+        $response = $this->client->request->post($url, $payload);
 
-		return $response->asObject();
-	}
+        return $response->asObject();
+    }
 
-	public function put($url, $payload = [])
-	{
-		$response = $this->client->request->put($url, $payload);
+    public function put($url, $payload = [])
+    {
+        $response = $this->client->request->put($url, $payload);
 
-		if ($response->isSuccess()) {
-			return $response->asObject();
-		}
+        if ($response->isSuccess()) {
+            return $response->asObject();
+        }
 
-		//TODO Handle error in request
-	}
+        //TODO Handle error in request
+    }
 
-	public function setHeaders($headers){
-		$this->client->setHeaders($headers);
-		return $this;
-	}
+    public function setHeaders($headers)
+    {
+        $this->client->setHeaders($headers);
+        return $this;
+    }
 
-	private function getApiKey()
-	{
-		return Craft::parseEnv($this->gateway->api_key);
-	}
+    private function getApiKey()
+    {
+        return Craft::parseEnv($this->gateway->api_key);
+    }
 }
