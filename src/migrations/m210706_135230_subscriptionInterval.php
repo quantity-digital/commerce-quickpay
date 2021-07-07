@@ -1,6 +1,6 @@
 <?php
 
-namespace craft\contentmigrations;
+namespace QD\commerce\quickpay\migrations;
 
 use Craft;
 use craft\db\Migration;
