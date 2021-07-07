@@ -10,6 +10,7 @@ use craft\db\Query;
 use DateTime;
 use Exception;
 use QD\commerce\quickpay\elements\Subscription;
+use QD\commerce\quickpay\helpers\Log;
 use QD\commerce\quickpay\Plugin;
 use Throwable;
 
@@ -19,10 +20,14 @@ class SubscriptionsCronController extends Controller
 
 	public function actionCreateOrder()
 	{
-		//Should find all subscriptins thats not cancelled, and where next payment is older than current time
-		$subscriptions = Subscription::find()->isCanceled(false)->isSuspended(false)->nextPaymentDate(time())->all();
+		$subscriptions = Subscription::find()->isSuspended(false)->nextPaymentDate(time())->subscriptionEndDate(date('Y-m-d'));
 
 		foreach ($subscriptions as $subscription) {
+
+			if ($subscription->isCanceled && $subscription->subscriptionEndDate->format('Y-m-d') == date('Y-m-d')) {
+				continue;
+			}
+
 			$gateway = $subscription->order->getGateway();
 			$orderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
 
@@ -44,7 +49,7 @@ class SubscriptionsCronController extends Controller
 			$order->couponCode = $subscription->order->couponCode;
 
 			if (!Craft::$app->getElements()->saveElement($order)) {
-				var_dump($order->errors);
+				Log::error(print_r($order->errors, true));
 			}
 
 			$purchasable = $subscription->plan;
@@ -54,6 +59,12 @@ class SubscriptionsCronController extends Controller
 
 			if ($this->markAsComplete($order)) {
 				$subscription->nextPaymentDate = Plugin::getInstance()->getSubscriptions()->calculateNextPaymentDate($subscription);
+
+				// If end of subscription periode, renew with subscription interval
+				if ($subscription->subscriptionEndDate->format('Y-m-d') == date('Y-m-d')) {
+					$subscription->subscriptionEndDate = Plugin::getInstance()->getSubscriptions()->calculateNextSubscriptionEndDate($subscription);
+				}
+
 				Craft::$app->getElements()->saveElement($subscription);
 			}
 		}

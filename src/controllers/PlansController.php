@@ -522,6 +522,7 @@ class PlansController extends Controller
 		$plan->enabledForSite = (bool)$request->getBodyParam('enabledForSite', $plan->enabledForSite);
 		$plan->title = $request->getBodyParam('title', $plan->title);
 		$plan->planInterval = $request->getBodyParam('planInterval');
+		$plan->subscriptionInterval = $request->getBodyParam('subscriptionInterval');
 		$plan->trialDays = $request->getBodyParam('trialDays');
 
 		$plan->setFieldValuesFromRequest('fields');

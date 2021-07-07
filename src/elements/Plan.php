@@ -45,6 +45,7 @@ class Plan extends Purchasable
 	public $sku;
 	public $price;
 	public $planInterval;
+	public $subscriptionInterval;
 	public $trialDays;
 
 	// Private Properties
@@ -356,6 +357,7 @@ class Plan extends Purchasable
 		$planRecord->title = $this->title;
 		$planRecord->slug = $this->slug;
 		$planRecord->planInterval = $this->planInterval;
+		$planRecord->subscriptionInterval = $this->subscriptionInterval;
 		$planRecord->trialDays = $this->trialDays;
 
 		// Generate SKU if empty

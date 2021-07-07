@@ -67,6 +67,11 @@ class Subscription extends Element
 	public $nextPaymentDate;
 
 	/**
+	 * @var DateTime Date of subscription end
+	 */
+	public $subscriptionEndDate;
+
+	/**
 	 * @var bool Whether the subscription is canceled
 	 */
 	public $isCanceled;
@@ -355,7 +360,7 @@ class Subscription extends Element
 	 */
 	public function getStatus()
 	{
-		if ($this->isCanceled) {
+		if ($this->isCanceled && $this->subscriptionEndDate < date('Y-m-d')) {
 			return self::STATUS_EXPIRED;
 		}
 
@@ -508,6 +513,7 @@ class Subscription extends Element
 	{
 		$attributes = parent::datetimeAttributes();
 		$attributes[] = 'nextPaymentDate';
+		$attributes[] = 'subscriptionEndDate';
 		$attributes[] = 'dateExpired';
 		$attributes[] = 'dateCanceled';
 		$attributes[] = 'dateSuspended';
@@ -530,7 +536,6 @@ class Subscription extends Element
 	{
 		if (!$isNew) {
 			$subscriptionRecord = SubscriptionRecord::findOne($this->id);
-
 			if (!$subscriptionRecord) {
 				throw new InvalidConfigException('Invalid subscription id: ' . $this->id);
 			}
@@ -563,11 +568,13 @@ class Subscription extends Element
 			$subscriptionRecord->orderId = $this->orderId;
 			$subscriptionRecord->trialDays = $this->trialDays;
 			$subscriptionRecord->userId = $this->userId;
-			$subscriptionRecord->nextPaymentDate = $this->calculateFirstPaymentDate($this->trialDays);
+			$subscriptionRecord->nextPaymentDate = $this->calculateFirstPaymentDate();
+			$subscriptionRecord->subscriptionEndDate = $this->calculateFirstSubscriptionEndDate();
 		}
 
 		if (!$isNew) {
 			$subscriptionRecord->nextPaymentDate = $this->nextPaymentDate;
+			$subscriptionRecord->subscriptionEndDate = $this->subscriptionEndDate;
 		}
 
 		$subscriptionRecord->save(false);
@@ -578,6 +585,11 @@ class Subscription extends Element
 	public function calculateFirstPaymentDate()
 	{
 		return Carbon::instance($this->dateStarted)->addDay($this->trialDays);
+	}
+
+	public function calculateFirstSubscriptionEndDate()
+	{
+		return Carbon::instance($this->dateStarted)->addMonthNoOverflow($this->plan->subscriptionInterval);
 	}
 
 	public static function getFieldDefinitions(): array
@@ -602,6 +614,7 @@ class Subscription extends Element
 			'dateCanceled' => ['label' => Craft::t('commerce', 'Cancellation date')],
 			'dateStarted' => ['label' => Craft::t('commerce', 'Subscription date')],
 			'nextPaymentDate' => ['label' => Craft::t('commerce', 'Next paymentdate')],
+			'subscriptionEndDate' => ['label' => Craft::t('commerce', 'Subscribed until')],
 			'dateExpired' => ['label' => Craft::t('commerce', 'Expiry date')],
 			'trialExpires' => ['label' => Craft::t('commerce', 'Trial expiry date')],
 			'orderLink' => ['label' => Craft::t('commerce', 'Order')]

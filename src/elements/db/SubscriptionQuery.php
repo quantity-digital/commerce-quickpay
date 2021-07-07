@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link https://craftcms.com/
  * @copyright Copyright (c) Pixel & Tonic, Inc.
@@ -39,484 +40,502 @@ use yii\db\Schema;
  */
 class SubscriptionQuery extends ElementQuery
 {
-    /**
-     * @var int|int[] The user id of the subscriber
-     */
-    public $userId;
+	/**
+	 * @var int|int[] The user id of the subscriber
+	 */
+	public $userId;
 
-    /**
-     * @var int|int[] The subscription plan id
-     */
-    public $planId;
+	/**
+	 * @var int|int[] The subscription plan id
+	 */
+	public $planId;
 
-    /**
-     * @var int|int[] The id of the order that the license must be a part of.
-     */
-    public $orderId;
+	/**
+	 * @var int|int[] The id of the order that the license must be a part of.
+	 */
+	public $orderId;
 
-    /**
-     * @var int|int[] Number of trial days for the subscription
-     */
-    public $trialDays;
+	/**
+	 * @var int|int[] Number of trial days for the subscription
+	 */
+	public $trialDays;
 
-    /**
-     * @var bool Whether the subscription is currently on trial.
-     */
-    public $onTrial;
+	/**
+	 * @var bool Whether the subscription is currently on trial.
+	 */
+	public $onTrial;
 
-    /**
-     * @var DateTime Time of next payment for the subscription
-     */
-    public $nextPaymentDate;
+	/**
+	 * @var DateTime Time of next payment for the subscription
+	 */
+	public $nextPaymentDate;
 
-    /**
-     * @var bool Whether the subscription is canceled
-     */
-    public $isCanceled;
+	/**
+	 * @var DateTime Time of next payment for the subscription
+	 */
+	public $subscriptionEndDate;
 
-    /**
-     * @var bool Whether the subscription is suspended
-     */
-    public $isSuspended;
+	/**
+	 * @var bool Whether the subscription is canceled
+	 */
+	public $isCanceled;
 
-    /**
-     * @var DateTime The date the subscription ceased to be active
-     */
-    public $dateSuspended;
+	/**
+	 * @var bool Whether the subscription is suspended
+	 */
+	public $isSuspended;
 
-    /**
-     * @var bool Whether the subscription has started
-     */
-    public $hasStarted;
+	/**
+	 * @var DateTime The date the subscription ceased to be active
+	 */
+	public $dateSuspended;
 
-    /**
-     * @var DateTime The time the subscription was canceled
-     */
-    public $dateCanceled;
+	/**
+	 * @var bool Whether the subscription has started
+	 */
+	public $hasStarted;
 
-    /**
-     * @var DateTime The date the subscription ceased to be active
-     */
-    public $dateExpired;
+	/**
+	 * @var DateTime The time the subscription was canceled
+	 */
+	public $dateCanceled;
+
+	/**
+	 * @var DateTime The date the subscription ceased to be active
+	 */
+	public $dateExpired;
 
 	public $cardExpireYear;
 
 	public $cardExpireMonth;
 
-    /**
-     * @var array
-     */
-    protected $defaultOrderBy = ['quickpay_subscriptions.dateStarted' => SORT_DESC];
+	/**
+	 * @var array
+	 */
+	protected $defaultOrderBy = ['quickpay_subscriptions.dateStarted' => SORT_DESC];
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct(string $elementType, array $config = [])
-    {
-        // Default status
-        if (!isset($config['status'])) {
-            $config['status'] = Subscription::STATUS_ACTIVE;
-            $config['hasStarted'] = true;
-            $config['isCanceled'] = false;
-        }
+	/**
+	 * @inheritdoc
+	 */
+	public function __construct(string $elementType, array $config = [])
+	{
+		// Default status
+		if (!isset($config['status'])) {
+			// $config['status'] = Subscription::STATUS_ACTIVE;
+			$config['hasStarted'] = true;
+			// $config['isCanceled'] = false;
+		}
 
-        parent::__construct($elementType, $config);
-    }
+		parent::__construct($elementType, $config);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function __set($name, $value)
-    {
-        switch ($name) {
-            case 'user':
-                $this->user($value);
-                break;
-            case 'plan':
-                $this->plan($value);
-                break;
-            default:
-                parent::__set($name, $value);
-        }
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function __set($name, $value)
+	{
+		switch ($name) {
+			case 'user':
+				$this->user($value);
+				break;
+			case 'plan':
+				$this->plan($value);
+				break;
+			default:
+				parent::__set($name, $value);
+		}
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ user accounts.
-     *
-     * @param mixed $value
-     * @return static self reference
-     */
-    public function user($value)
-    {
-        if ($value instanceof User) {
-            $this->userId = $value->id;
-        } else if ($value !== null) {
-            $this->userId = (new Query())
-                ->select(['id'])
-                ->from([DbTable::USERS])
-                ->where(Db::parseParam('username', $value))
-                ->column();
-        } else {
-            $this->userId = null;
-        }
+	/**
+	 * Narrows the query results based on the subscriptions’ user accounts.
+	 *
+	 * @param mixed $value
+	 * @return static self reference
+	 */
+	public function user($value)
+	{
+		if ($value instanceof User) {
+			$this->userId = $value->id;
+		} else if ($value !== null) {
+			$this->userId = (new Query())
+				->select(['id'])
+				->from([DbTable::USERS])
+				->where(Db::parseParam('username', $value))
+				->column();
+		} else {
+			$this->userId = null;
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscription plan.
-     *
-     * @param mixed $value
-     * @return static self reference
-     */
-    public function plan($value)
-    {
-        if ($value instanceof Plan) {
-            $this->planId = $value->id;
-        } else if ($value !== null) {
-            $this->planId = (new Query())
-                ->select(['id'])
-                ->from([Table::PLANS])
-                ->where(Db::parseParam('slug', $value))
-                ->column();
-        } else {
-            $this->planId = null;
-        }
+	/**
+	 * Narrows the query results based on the subscription plan.
+	 *
+	 * @param mixed $value
+	 * @return static self reference
+	 */
+	public function plan($value)
+	{
+		if ($value instanceof Plan) {
+			$this->planId = $value->id;
+		} else if ($value !== null) {
+			$this->planId = (new Query())
+				->select(['id'])
+				->from([Table::PLANS])
+				->where(Db::parseParam('slug', $value))
+				->column();
+		} else {
+			$this->planId = null;
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ user accounts’ IDs.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function userId($value)
-    {
-        $this->userId = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the subscriptions’ user accounts’ IDs.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function userId($value)
+	{
+		$this->userId = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscription plans’ IDs.
-     *
-     * Possible values include:
-     *
-     * | Value | Fetches {elements}…
-     * | - | -
-     * | `1` | for a plan with an ID of 1.
-     * | `[1, 2]` | for plans with an ID of 1 or 2.
-     * | `['not', 1, 2]` | for plans not with an ID of 1 or 2.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function planId($value)
-    {
-        $this->planId = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the subscription plans’ IDs.
+	 *
+	 * Possible values include:
+	 *
+	 * | Value | Fetches {elements}…
+	 * | - | -
+	 * | `1` | for a plan with an ID of 1.
+	 * | `[1, 2]` | for plans with an ID of 1 or 2.
+	 * | `['not', 1, 2]` | for plans not with an ID of 1 or 2.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function planId($value)
+	{
+		$this->planId = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the order, per its ID.
-     *
-     * Possible values include:
-     *
-     * | Value | Fetches {elements}…
-     * | - | -
-     * | `1` | with an order with an ID of 1.
-     * | `'not 1'` | not with an order with an ID of 1.
-     * | `[1, 2]` | with an order with an ID of 1 or 2.
-     * | `['not', 1, 2]` | not with an order with an ID of 1 or 2.
-     *
-     * @param int|int[] $value The property value
-     * @return static self reference
-     */
-    public function orderId($value)
-    {
-        $this->orderId = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the order, per its ID.
+	 *
+	 * Possible values include:
+	 *
+	 * | Value | Fetches {elements}…
+	 * | - | -
+	 * | `1` | with an order with an ID of 1.
+	 * | `'not 1'` | not with an order with an ID of 1.
+	 * | `[1, 2]` | with an order with an ID of 1 or 2.
+	 * | `['not', 1, 2]` | not with an order with an ID of 1 or 2.
+	 *
+	 * @param int|int[] $value The property value
+	 * @return static self reference
+	 */
+	public function orderId($value)
+	{
+		$this->orderId = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the number of trial days.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function trialDays($value)
-    {
-        $this->trialDays = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the number of trial days.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function trialDays($value)
+	{
+		$this->trialDays = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results to only subscriptions that are on trial.
-     *
-     *
-     * @param bool $value The property value
-     * @return static self reference
-     */
-    public function onTrial(bool $value = true)
-    {
-        $this->onTrial = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results to only subscriptions that are on trial.
+	 *
+	 *
+	 * @param bool $value The property value
+	 * @return static self reference
+	 */
+	public function onTrial(bool $value = true)
+	{
+		$this->onTrial = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ next payment dates.
-     *
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function nextPaymentDate($value)
-    {
-        $this->nextPaymentDate = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the subscriptions’ next payment dates.
+	 *
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function nextPaymentDate($value)
+	{
+		$this->nextPaymentDate = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results to only subscriptions that are canceled.
-     *
-     * @param bool $value The property value
-     * @return static self reference
-     */
-    public function isCanceled(bool $value = true)
-    {
-        $this->isCanceled = $value;
-        return $this;
-    }
+	public function subscriptionEndDate($value)
+	{
+		$this->subscriptionEndDate = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ cancellation date.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function dateCanceled($value)
-    {
-        $this->dateCanceled = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results to only subscriptions that are canceled.
+	 *
+	 * @param bool $value The property value
+	 * @return static self reference
+	 */
+	public function isCanceled(bool $value = true)
+	{
+		$this->isCanceled = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results to only subscriptions that have started.
-     *
-     * @param bool $value The property value
-     * @return static self reference
-     */
-    public function hasStarted(bool $value = true)
-    {
-        $this->hasStarted = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the subscriptions’ cancellation date.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function dateCanceled($value)
+	{
+		$this->dateCanceled = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results to only subscriptions that are suspended.
-     *
-     * @param bool $value The property value
-     * @return static self reference
-     */
-    public function isSuspended(bool $value = true)
-    {
-        $this->isSuspended = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results to only subscriptions that have started.
+	 *
+	 * @param bool $value The property value
+	 * @return static self reference
+	 */
+	public function hasStarted(bool $value = true)
+	{
+		$this->hasStarted = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ suspension date.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function dateSuspended($value)
-    {
-        $this->dateSuspended = $value;
-        return $this;
-    }
+	/**
+	 * Narrows the query results to only subscriptions that are suspended.
+	 *
+	 * @param bool $value The property value
+	 * @return static self reference
+	 */
+	public function isSuspended(bool $value = true)
+	{
+		$this->isSuspended = $value;
+		return $this;
+	}
 
-    /**
-     * Narrows the query results based on the subscriptions’ expiration date.
-     *
-     * @param mixed $value The property value
-     * @return static self reference
-     */
-    public function dateExpired($value)
-    {
-        $this->dateExpired = $value;
+	/**
+	 * Narrows the query results based on the subscriptions’ suspension date.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function dateSuspended($value)
+	{
+		$this->dateSuspended = $value;
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * Narrows the query results based on the subscriptions’ expiration date.
+	 *
+	 * @param mixed $value The property value
+	 * @return static self reference
+	 */
+	public function dateExpired($value)
+	{
+		$this->dateExpired = $value;
 
-	public function cardExpireYear($value){
+		return $this;
+	}
+
+	public function cardExpireYear($value)
+	{
 		$this->cardExpireYear = $value;
 
 		return $this;
 	}
 
-	public function cardExpireMonth($value){
+	public function cardExpireMonth($value)
+	{
 		$this->cardExpireMonth = $value;
 
 		return $this;
 	}
 
-    /**
-     * Narrows the query results based on the {elements}’ statuses.
-     *
-     */
-    public function status($value)
-    {
-        return parent::status($value);
-    }
+	/**
+	 * Narrows the query results based on the {elements}’ statuses.
+	 *
+	 */
+	public function status($value)
+	{
+		return parent::status($value);
+	}
 
-    /**
-     * @inheritdoc
-     */
-    protected function beforePrepare(): bool
-    {
-        // See if 'plan' were set to invalid handles
-        if ($this->planId === []) {
-            return false;
-        }
+	/**
+	 * @inheritdoc
+	 */
+	protected function beforePrepare(): bool
+	{
+		// See if 'plan' were set to invalid handles
+		if ($this->planId === []) {
+			return false;
+		}
 
-        $this->joinElementTable('quickpay_subscriptions');
-        $this->subQuery->innerJoin(DbTable::USERS . ' users', '[[quickpay_subscriptions.userId]] = [[users.id]]');
+		$this->joinElementTable('quickpay_subscriptions');
+		$this->subQuery->innerJoin(DbTable::USERS . ' users', '[[quickpay_subscriptions.userId]] = [[users.id]]');
 
-        $this->query->select([
-            'quickpay_subscriptions.id',
-            'quickpay_subscriptions.userId',
-            'quickpay_subscriptions.planId',
-            'quickpay_subscriptions.orderId',
-            'quickpay_subscriptions.subscriptionData',
-            'quickpay_subscriptions.trialDays',
-            'quickpay_subscriptions.nextPaymentDate',
-            'quickpay_subscriptions.isCanceled',
-            'quickpay_subscriptions.dateCanceled',
-            'quickpay_subscriptions.dateExpired',
-            'quickpay_subscriptions.dateStarted',
-            'quickpay_subscriptions.hasStarted',
-            'quickpay_subscriptions.isSuspended',
-            'quickpay_subscriptions.dateSuspended',
-            'quickpay_subscriptions.cardLast4',
-            'quickpay_subscriptions.cardExpireMonth',
-            'quickpay_subscriptions.cardExpireYear',
-            'quickpay_subscriptions.cardBrand',
-            'quickpay_subscriptions.quickpayReference',
-        ]);
+		$this->query->select([
+			'quickpay_subscriptions.id',
+			'quickpay_subscriptions.userId',
+			'quickpay_subscriptions.planId',
+			'quickpay_subscriptions.orderId',
+			'quickpay_subscriptions.subscriptionData',
+			'quickpay_subscriptions.trialDays',
+			'quickpay_subscriptions.nextPaymentDate',
+			'quickpay_subscriptions.subscriptionEndDate',
+			'quickpay_subscriptions.isCanceled',
+			'quickpay_subscriptions.dateCanceled',
+			'quickpay_subscriptions.dateExpired',
+			'quickpay_subscriptions.dateStarted',
+			'quickpay_subscriptions.hasStarted',
+			'quickpay_subscriptions.isSuspended',
+			'quickpay_subscriptions.dateSuspended',
+			'quickpay_subscriptions.cardLast4',
+			'quickpay_subscriptions.cardExpireMonth',
+			'quickpay_subscriptions.cardExpireYear',
+			'quickpay_subscriptions.cardBrand',
+			'quickpay_subscriptions.quickpayReference',
+		]);
 
-        if ($this->userId) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.userId', $this->userId));
-        }
+		if ($this->userId) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.userId', $this->userId));
+		}
 
-        if ($this->planId) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.planId', $this->planId));
-        }
+		if ($this->planId) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.planId', $this->planId));
+		}
 
-        if ($this->orderId) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.orderId', $this->orderId));
-        }
+		if ($this->orderId) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.orderId', $this->orderId));
+		}
 
-        if ($this->trialDays) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.trialDays', $this->trialDays));
-        }
+		if ($this->trialDays) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.trialDays', $this->trialDays));
+		}
 
-        if ($this->nextPaymentDate) {
-            $this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.nextPaymentDate', $this->nextPaymentDate, '<='));
-        }
+		if ($this->nextPaymentDate) {
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.nextPaymentDate', $this->nextPaymentDate, '<='));
+		}
 
-        if ($this->isCanceled !== null) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.isCanceled', $this->isCanceled, '=', false, Schema::TYPE_BOOLEAN));
-        }
+		if ($this->subscriptionEndDate) {
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.subscriptionEndDate', $this->subscriptionEndDate, '>='));
+		}
 
-        if ($this->dateCanceled) {
-            $this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateCanceled', $this->dateCanceled));
-        }
+		if ($this->isCanceled !== null) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.isCanceled', $this->isCanceled, '=', false, Schema::TYPE_BOOLEAN));
+		}
 
-        if ($this->hasStarted !== null) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.hasStarted', $this->hasStarted, '=', false, Schema::TYPE_BOOLEAN));
-        }
+		if ($this->dateCanceled) {
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateCanceled', $this->dateCanceled));
+		}
 
-        if ($this->isSuspended !== null) {
-            $this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.isSuspended', $this->isSuspended, '=', false, Schema::TYPE_BOOLEAN));
-        }
+		if ($this->hasStarted !== null) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.hasStarted', $this->hasStarted, '=', false, Schema::TYPE_BOOLEAN));
+		}
 
-        if ($this->dateSuspended) {
-            $this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateSuspended', $this->dateSuspended));
-        }
+		if ($this->isSuspended !== null) {
+			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.isSuspended', $this->isSuspended, '=', false, Schema::TYPE_BOOLEAN));
+		}
 
-        if ($this->dateExpired) {
-            $this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateExpired', $this->dateExpired));
-        }
+		if ($this->dateSuspended) {
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateSuspended', $this->dateSuspended));
+		}
 
-		if ($this->cardExpireMonth){
+		if ($this->dateExpired) {
+			$this->subQuery->andWhere(Db::parseDateParam('quickpay_subscriptions.dateExpired', $this->dateExpired));
+		}
+
+		if ($this->cardExpireMonth) {
 			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.cardExpireMonth', $this->cardExpireMonth));
 		}
 
-		if ($this->cardExpireYear){
+		if ($this->cardExpireYear) {
 			$this->subQuery->andWhere(Db::parseParam('quickpay_subscriptions.cardExpireYear', $this->cardExpireYear));
 		}
 
-        if ($this->onTrial === true) {
-            $this->subQuery->andWhere($this->_getTrialCondition(true));
-        } else if ($this->onTrial === false) {
-            $this->subQuery->andWhere($this->_getTrialCondition(false));
-        }
+		if ($this->onTrial === true) {
+			$this->subQuery->andWhere($this->_getTrialCondition(true));
+		} else if ($this->onTrial === false) {
+			$this->subQuery->andWhere($this->_getTrialCondition(false));
+		}
 
-        return parent::beforePrepare();
-    }
+		return parent::beforePrepare();
+	}
 
-    /**
-     * @inheritdoc
-     */
-    protected function statusCondition(string $status)
-    {
-        switch ($status) {
-            case Subscription::STATUS_ACTIVE:
-                return [
-                    'quickpay_subscriptions.isCanceled' => '0',
-                ];
-            case Subscription::STATUS_EXPIRED:
-                return [
-                    'quickpay_subscriptions.isCanceled' => '1',
-                ];
-            default:
-                return parent::statusCondition($status);
-        }
-    }
+	/**
+	 * @inheritdoc
+	 */
+	protected function statusCondition(string $status)
+	{
+		switch ($status) {
+			case Subscription::STATUS_ACTIVE:
+				return [
+					'quickpay_subscriptions.isCanceled' => '0',
+				];
+			case Subscription::STATUS_EXPIRED:
+				return [
+					'quickpay_subscriptions.isCanceled' => '1',
+				];
+			default:
+				return parent::statusCondition($status);
+		}
+	}
 
-    /**
-     * @inheritdoc
-     */
+	/**
+	 * @inheritdoc
+	 */
 
-    public function anyStatus()
-    {
-        $this->isSuspended = null;
-        $this->hasStarted = null;
-        return parent::anyStatus();
-    }
+	public function anyStatus()
+	{
+		$this->isSuspended = null;
+		$this->hasStarted = null;
+		return parent::anyStatus();
+	}
 
-    /**
-     * Returns the SQL condition to use for trial status.
-     *
-     * @param bool $onTrial
-     * @return mixed
-     */
-    private function _getTrialCondition(bool $onTrial)
-    {
-        if ($onTrial) {
-            if (Craft::$app->getDb()->getIsPgsql()) {
-                return new Expression("NOW() <= [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
-            }
+	/**
+	 * Returns the SQL condition to use for trial status.
+	 *
+	 * @param bool $onTrial
+	 * @return mixed
+	 */
+	private function _getTrialCondition(bool $onTrial)
+	{
+		if ($onTrial) {
+			if (Craft::$app->getDb()->getIsPgsql()) {
+				return new Expression("NOW() <= [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
+			}
 
-            return new Expression('NOW() <= ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
-        }
+			return new Expression('NOW() <= ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
+		}
 
-        if (Craft::$app->getDb()->getIsPgsql()) {
-            return new Expression("NOW() > [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
-        }
+		if (Craft::$app->getDb()->getIsPgsql()) {
+			return new Expression("NOW() > [[quickpay_subscriptions.dateStarted]] + [[quickpay_subscriptions.trialDays]] * INTERVAL '1 day'");
+		}
 
-        return new Expression('NOW() > ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
-    }
+		return new Expression('NOW() > ADDDATE([[quickpay_subscriptions.dateStarted]], [[quickpay_subscriptions.trialDays]])');
+	}
 }

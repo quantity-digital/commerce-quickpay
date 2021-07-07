@@ -163,33 +163,56 @@ class Subscriptions extends Component
 		return $subscription;
 	}
 
+	public function calculateNextSubscriptionEndDate($subscription)
+	{
+		$dateStarted = DateTime::createFromFormat('Y-m-j H:i:s', $subscription->dateStarted);
+		$dayStarted = $dateStarted->format('d');
+
+		$monthLength = $dateStarted->format('t');
+		$shift = $monthLength - $dayStarted;
+
+		$subscriptionInterval = $subscription->plan->subscriptionInterval;
+
+		Carbon::useMonthsOverflow(false);
+		if ($dayStarted > 28) {
+			$dateObject = Carbon::instance($subscription->subscriptionEndDate)->addMonthNoOverflow($subscriptionInterval)->lastOfMonth()->subDay($shift);
+		}
+
+		if ($dayStarted <= 28) {
+			$dateObject = Carbon::instance($subscription->subscriptionEndDate)->addMonthNoOverflow($subscriptionInterval);
+		}
+
+		return $dateObject->setTime($dateStarted->format('H'), $dateStarted->format('i'));
+	}
+
 	public function calculateNextPaymentDate($subscription)
 	{
-		$subscription->dateStarted = DateTime::createFromFormat('Y-m-j H:i:s', $subscription->dateStarted);
-		$dateStarted = $subscription->dateStarted->format('d');
+		$dateStarted = DateTime::createFromFormat('Y-m-j H:i:s', $subscription->dateStarted);
 
-		$monthLength = $subscription->dateStarted->format('t');
-		$shift = $monthLength - $dateStarted;
+		$dayStarted = $dateStarted->format('d');
+
+		$monthLength = $dateStarted->format('t');
+		$shift = $monthLength - $dayStarted;
 
 		$planInterval = $subscription->plan->planInterval;
 
 		Carbon::useMonthsOverflow(false);
-		if ($dateStarted > 28) {
+		if ($dayStarted > 28) {
 			$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($planInterval)->lastOfMonth()->subDay($shift);
 		}
 
-		if ($dateStarted <= 28){
+		if ($dayStarted <= 28) {
 			$dateObject = Carbon::instance($subscription->nextPaymentDate)->addMonthNoOverflow($planInterval);
 		}
 
-		return $dateObject->setTime($subscription->dateStarted->format('H'), $subscription->dateStarted->format('i'));
+		return $dateObject->setTime($dateStarted->format('H'), $dateStarted->format('i'));
 	}
 
 	public function cancelSubscription(Subscription $subscription): bool
 	{
 		$subscription->isCanceled = true;
 		$subscription->dateCanceled = Db::prepareDateForDb(new DateTime());
-		$subscription->dateExpired = Db::prepareDateForDb($subscription->nextPaymentDate);
+		$subscription->dateExpired = Db::prepareDateForDb($subscription->subscriptionEndDate);
 
 		try {
 			Craft::$app->getElements()->saveElement($subscription, false);
