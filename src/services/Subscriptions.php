@@ -319,7 +319,7 @@ class Subscriptions extends Component
 		$this->api->setGateway($gateway);
 
 		$authorizedTransation = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
-		$authorizedAmount     = (int)$transaction->amount;
+		$authorizedAmount     = (float)$transaction->amount;
 		$amount               = $order->getOutstandingBalance();
 
 		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
@@ -341,7 +341,7 @@ class Subscriptions extends Component
 
 	public function refundFromGateway(Transaction $transaction): RefundResponse
 	{
-		$amount     = (int)$transaction->amount * 100;
+		$amount     = (float)$transaction->amount * 100;
 		$response = Plugin::$plugin->api->post("/payments/{$transaction->reference}/refund", [
 			'amount' => $amount
 		]);

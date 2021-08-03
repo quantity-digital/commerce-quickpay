@@ -7,6 +7,7 @@ use craft\commerce\controllers\BaseController;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin;
 use craft\helpers\Json;
+use QD\commerce\quickpay\Plugin as QuickpayPlugin;
 use yii\web\ForbiddenHttpException;
 
 class PaymentsCallbackController extends BaseController
@@ -78,7 +79,8 @@ class PaymentsCallbackController extends BaseController
 		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
 
 		//Enable recalculation for order
-		$order->setRecalculationMode(Order::RECALCULATION_MODE_ALL);
+		QuickpayPlugin::getInstance()->orders->enableCalculation($order);
+		QuickpayPlugin::getInstance()->payments->cancelLinkFromGateway($authTransaction);
 
 		return Craft::$app->getResponse()->redirect($order->cancelUrl)->send();
 	}

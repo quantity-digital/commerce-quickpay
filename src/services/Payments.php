@@ -7,6 +7,7 @@ use craft\commerce\base\SubscriptionGateway;
 use craft\commerce\models\Transaction;
 use craft\commerce\services\Gateways;
 use craft\commerce\elements\Order;
+use craft\commerce\Plugin as CommercePlugin;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\models\PaymentRequestModel;
 use QD\commerce\quickpay\Plugin;
@@ -111,12 +112,30 @@ class Payments extends Component
 
 	public function refundFromGateway(Transaction $transaction): RefundResponse
 	{
-		$amount     = (int)$transaction->amount * 100;
+		$amount     = (float)$transaction->amount * 100;
 		$response = Plugin::$plugin->api->post("/payments/{$transaction->reference}/refund", [
 			'amount' => $amount
 		]);
 
 		return new RefundResponse($response);
+	}
+
+	public function cancelLinkFromGateway(Transaction $authTransaction)
+	{
+		$order = $authTransaction->getOrder();
+
+		$this->api->setGateway($order->getGateway());
+
+		$response = $this->api->delete("/payments/{$authTransaction->reference}/link");
+
+		$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order, $authTransaction);
+		$transaction->status = TransactionRecord::STATUS_FAILED;
+		$transaction->type = TransactionRecord::TYPE_AUTHORIZE;
+		$transaction->reference = $transaction->reference;
+		$transaction->response = '';
+		$transaction->message = 'Transaction canceled.';
+
+		CommercePlugin::getInstance()->transactions->saveTransaction($transaction);
 	}
 
 	/**

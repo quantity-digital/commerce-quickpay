@@ -5,6 +5,7 @@ namespace QD\commerce\quickpay;
 use Craft;
 use craft\commerce\elements\db\OrderQuery;
 use craft\commerce\elements\Order;
+use craft\commerce\events\AddLineItemEvent;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\events\RegisterUrlRulesEvent;
@@ -16,6 +17,7 @@ use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\commerce\services\Purchasables;
 use craft\events\DefineBehaviorsEvent;
+use craft\events\ModelEvent;
 use craft\services\Elements;
 use craft\services\Fields;
 use craft\services\Sites;
@@ -170,6 +172,36 @@ class Plugin extends \craft\base\Plugin
 
 	protected function installSiteEventListeners()
 	{
+		// Event::on(
+		// 	Order::class,
+		// 	Order::EVENT_BEFORE_SAVE,
+		// 	function (ModelEvent $event) {
+		// 		// @var Order $order
+		// 		$order = $event->sender;
+
+		// 		if ($order->isCompleted) {
+		// 			return;
+		// 		}
+
+		// 		$originalRecalculationMode = $order->getRecalculationMode();
+
+		// 		//Ensure that total price, vat, etc is calculated in case customer returned from payment window using return button
+		// 		if ($originalRecalculationMode === Order::RECALCULATION_MODE_NONE) {
+		// 			$order->setRecalculationMode(Order::RECALCULATION_MODE_ALL);
+
+		// 			$transactions = $order->getTransactions();
+		// 			$reversed = array_reverse($transactions);
+
+		// 			foreach ($reversed as $transaction) {
+		// 				if (!$transaction->parentId && $transaction->status === 'redirect') {
+		// 					$this->payments->cancelLinkFromGateway($transaction);
+		// 					break;
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// );
+
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_SITE_URL_RULES,
