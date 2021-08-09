@@ -143,7 +143,7 @@ class Subscription extends Element
 	 */
 	public static function displayName(): string
 	{
-		return Craft::t('commerce', 'Subscription');
+		return 'Subscription';
 	}
 
 	/**
@@ -151,7 +151,7 @@ class Subscription extends Element
 	 */
 	public static function lowerDisplayName(): string
 	{
-		return Craft::t('commerce', 'subscription');
+		return 'subscription';
 	}
 
 	/**
@@ -159,7 +159,7 @@ class Subscription extends Element
 	 */
 	public static function pluralDisplayName(): string
 	{
-		return Craft::t('commerce', 'Subscriptions');
+		return 'Subscriptions';
 	}
 
 	/**
@@ -167,7 +167,7 @@ class Subscription extends Element
 	 */
 	public static function pluralLowerDisplayName(): string
 	{
-		return Craft::t('commerce', 'subscriptions');
+		return 'subscriptions';
 	}
 
 	/**
