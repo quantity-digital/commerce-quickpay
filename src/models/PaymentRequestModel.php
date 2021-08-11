@@ -4,10 +4,10 @@ namespace QD\commerce\quickpay\models;
 
 use Craft;
 use craft\base\Model;
+use craft\commerce\elements\Order;
 use craft\commerce\helpers\Currency;
 use craft\helpers\UrlHelper;
 use craft\commerce\Plugin as CommercePlugin;
-use QD\commerce\quickpay\Plugin;
 use Throwable;
 
 /**
@@ -41,7 +41,10 @@ class PaymentRequestModel extends Model
 			try {
 				$orderId = Craft::$app->getView()->renderObjectTemplate($referenceTemplate, $this);
 				$this->order->reference = $orderId;
+				$originalRecalculationMode = $this->order->getRecalculationMode();
+				$this->order->setRecalculationMode(Order::RECALCULATION_MODE_ALL);
 				Craft::$app->getElements()->saveElement($this->order, false);
+				$this->order->setRecalculationMode($originalRecalculationMode);
 			} catch (Throwable $exception) {
 				Craft::error('Unable to generate order completion reference for order ID: ' . $this->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
 				throw $exception;
