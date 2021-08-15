@@ -112,8 +112,11 @@ class Payments extends Component
 
 	public function refundFromGateway(Transaction $transaction): RefundResponse
 	{
+		$order                = $transaction->getOrder();
+		$this->api->setGateway($order->getGateway());
+
 		$amount     = (float)$transaction->amount * 100;
-		$response = Plugin::$plugin->api->post("/payments/{$transaction->reference}/refund", [
+		$response = $this->api->post("/payments/{$transaction->reference}/refund", [
 			'amount' => $amount
 		]);
 
