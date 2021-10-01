@@ -28,13 +28,9 @@ class SubscriptionsCronController extends Controller
 				continue;
 			}
 
-			$gateway = $subscription->order->getGateway();
-			$orderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
-
 			$order = new Order();
 
 			$order->isCompleted = false;
-			$order->orderStatusId = $orderStatus;
 			$order->email = $subscription->order->email;
 			$order->customerId = $subscription->order->customerId;
 			$order->billingAddressId = $subscription->order->billingAddressId;
@@ -90,6 +86,10 @@ class SubscriptionsCronController extends Controller
 
 	private function markAsComplete($order): bool
 	{
+		$gateway = $order->getGateway();
+		$orderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
+
+		$order->orderStatusId = $orderStatus;
 		$order->isCompleted = true;
 		$order->dateOrdered = new DateTime();
 
