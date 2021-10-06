@@ -69,7 +69,8 @@ class SubscriptionsCronController extends Controller
 	public function actionAuthorize()
 	{
 		$gateway = Plugin::getInstance()->getSubscriptions()->getGateway();
-		$orderStatusId = Craft::parseEnv($gateway->paymentOrderStatus);
+		$orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($gateway->paymentOrderStatus);
+		$orderStatusId = $orderStatus->id;
 		$orders = Order::find()->isUnpaid()->orderStatusId($orderStatusId)->all();
 
 		foreach ($orders as $order) {
@@ -87,7 +88,8 @@ class SubscriptionsCronController extends Controller
 	private function markAsComplete($order): bool
 	{
 		$gateway = $order->getGateway();
-		$orderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
+		$orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($gateway->paymentOrderStatus);
+		$orderStatus = $orderStatus->id;
 
 		$order->orderStatusId = $orderStatus;
 		$order->isCompleted = true;

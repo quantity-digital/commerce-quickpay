@@ -2,7 +2,7 @@
 	"name": "quantity-digital/commerce-quickpay",
 	"description": "QuickPay integration for Craft Commerce 3",
 	"type": "craft-plugin",
-	"version": "2.2.20",
+	"version": "2.2.21",
 	"keywords": [
 		"craft",
 		"cms",

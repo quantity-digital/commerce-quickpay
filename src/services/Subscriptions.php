@@ -119,7 +119,8 @@ class Subscriptions extends Component
 	public function createSubscription(User $user, Plan $plan, Order $order, array $subscriptionData = [], array $fieldValues = []): Subscription
 	{
 		$gateway = $order->getGateway();
-		$paymentOrderStatus = Craft::parseEnv($gateway->paymentOrderStatus);
+		$orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($gateway->paymentOrderStatus);
+		$paymentOrderStatus = $orderStatus->id;
 
 		//This is a payment order, so ignore the create subscription
 		if ($order->orderStatusId == $paymentOrderStatus) {

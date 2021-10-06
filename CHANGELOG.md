@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.21 - 2021-10-06
+
+### Fixed
+
+* Fixed bug where orderstatus for subscriptions was saved with `id` instead of `handle`. Remember to resave your settings if using subscriptions to apply the new handle.
+
 ## 2.2.20 - 2021-10-01
 
 ### Changed

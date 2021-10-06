@@ -75,7 +75,7 @@ class Subscriptions extends BaseGateway
 
 		foreach (CommercePlugin::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
 			$statusOptions[] = [
-				'value' => $status->id,
+				'value' => $status->handle,
 				'label' => $status->displayName
 			];
 		}
