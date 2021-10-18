@@ -37,7 +37,7 @@ class OrderQueryBehavior extends Behavior
 	/**
 	 * Prepares the user query.
 	 */
-	public function afterPrepare()
+	public function beforePrepare()
 	{
 		if ($this->owner->select === ['COUNT(*)']) {
 			return;
