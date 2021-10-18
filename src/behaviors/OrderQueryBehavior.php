@@ -19,7 +19,7 @@ class OrderQueryBehavior extends Behavior
 	public function events()
 	{
 		return [
-			ElementQuery::EVENT_AFTER_PREPARE => [$this, 'afterPrepare'],
+			ElementQuery::EVENT_BEFORE_PREPARE => [$this, 'beforePrepare'],
 		];
 	}
 
@@ -44,7 +44,7 @@ class OrderQueryBehavior extends Behavior
 		}
 
 		// Join our `orderextras` table:
-		$this->owner->query->leftJoin('quickpay_orderinfo quickpay', '`quickpay`.`id` = `elements`.`id`');
+		$this->owner->query->leftJoin('quickpay_orderinfo quickpay', '`quickpay`.`id` = `commerce_orders`.`id`');
 
 		// Select custom columns:
 		$this->owner->query->addSelect([
@@ -54,6 +54,5 @@ class OrderQueryBehavior extends Behavior
 		if ($this->subscriptionId) {
 			$this->owner->query->andWhere(Db::parseParam('quickpay.subscriptionId', $this->subscriptionId));
 		}
-
 	}
 }
