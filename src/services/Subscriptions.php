@@ -8,6 +8,7 @@ use craft\base\Component;
 use craft\commerce\elements\Order;
 use craft\commerce\errors\SubscriptionException;
 use craft\commerce\events\SubscriptionEvent;
+use craft\commerce\events\TransactionEvent;
 use craft\commerce\models\Transaction;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\elements\User;
@@ -43,6 +44,8 @@ class Subscriptions extends Component
 
 	const EVENT_BEFORE_SUBSCRIPTION_CAPTURE = 'afterBeforeSubscriptionCapture';
 	const EVENT_BEFORE_RECURRING_AUTHORIZE = 'beforeRecurringAuthorize';
+
+	const EVENT_AFTER_CAPTURE_TRANSACTION = 'afterRecurringCapture';
 
 	public $api;
 
@@ -336,6 +339,13 @@ class Subscriptions extends Component
 		$response = Plugin::$plugin->api->post("/payments/{$authorizedTransation->reference}/capture", [
 			'amount' => $amount * 100
 		]);
+
+		// Raise 'afterCaptureTransaction' event
+		if ($this->hasEventHandlers(self::EVENT_AFTER_CAPTURE_TRANSACTION)) {
+			$this->trigger(self::EVENT_AFTER_CAPTURE_TRANSACTION, new TransactionEvent([
+				'transaction' => $transaction
+			]));
+		}
 
 		return new CaptureResponse($response);
 	}
