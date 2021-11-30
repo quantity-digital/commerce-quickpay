@@ -20,11 +20,11 @@ class SubscriptionsCronController extends Controller
 
 	public function actionCreateOrder()
 	{
-		$subscriptions = Subscription::find()->isSuspended(false)->nextPaymentDate(time())->subscriptionEndDate(date('Y-m-d'));
+		$subscriptions = Subscription::find()->isSuspended(false)->nextPaymentDate(time())->all();
 
 		foreach ($subscriptions as $subscription) {
 
-			if ($subscription->isCanceled && $subscription->subscriptionEndDate->format('Y-m-d') == date('Y-m-d')) {
+			if ($subscription->isCanceled && strtotime($subscription->subscriptionEndDate->format('Y-m-d')) <= strtotime(date('Y-m-d'))) {
 				continue;
 			}
 
@@ -57,7 +57,7 @@ class SubscriptionsCronController extends Controller
 				$subscription->nextPaymentDate = Plugin::getInstance()->getSubscriptions()->calculateNextPaymentDate($subscription);
 
 				// If end of subscription periode, renew with subscription interval
-				if ($subscription->subscriptionEndDate->format('Y-m-d') == date('Y-m-d')) {
+				if (strtotime($subscription->subscriptionEndDate->format('Y-m-d')) <= strtotime(date('Y-m-d'))) {
 					$subscription->subscriptionEndDate = Plugin::getInstance()->getSubscriptions()->calculateNextSubscriptionEndDate($subscription);
 				}
 
