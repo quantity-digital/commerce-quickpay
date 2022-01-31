@@ -141,6 +141,9 @@ class Subscriptions extends Component
 		$subscription->hasStarted = true;
 		$subscription->dateStarted = new DateTime('now');
 		$subscription->isSuspended = false;
+		$subscription->nextPaymentDate = new DateTime('now');
+		//Adjust next paymentdate
+		$subscription->nextPaymentDate = $this->calculateFirstPaymentDate($subscription);
 
 		$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
 
@@ -187,6 +190,17 @@ class Subscriptions extends Component
 		}
 
 		return $dateObject->setTime($dateStarted->format('H'), $dateStarted->format('i'));
+	}
+
+	public function calculateFirstPaymentDate($subscription)
+	{
+		if ($subscription->trialDays) {
+			return Carbon::instance($subscription->dateStarted)->addDays($subscription->trialDays);
+		}
+
+		if (!$subscription->trialDays) {
+			return $this->calculateNextPaymentDate($subscription);
+		}
 	}
 
 	public function calculateNextPaymentDate($subscription)

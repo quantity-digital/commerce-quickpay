@@ -360,7 +360,7 @@ class Subscription extends Element
 	 */
 	public function getStatus()
 	{
-		if ($this->isCanceled && $this->subscriptionEndDate < date('Y-m-d')) {
+		if ($this->isCanceled) {
 			return self::STATUS_EXPIRED;
 		}
 

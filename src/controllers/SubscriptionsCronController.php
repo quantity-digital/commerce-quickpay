@@ -57,8 +57,14 @@ class SubscriptionsCronController extends Controller
 				$subscription->nextPaymentDate = Plugin::getInstance()->getSubscriptions()->calculateNextPaymentDate($subscription);
 
 				// If end of subscription periode, renew with subscription interval
-				if (strtotime($subscription->subscriptionEndDate->format('Y-m-d')) <= strtotime(date('Y-m-d'))) {
+				if ($subscription->subscriptionEndDate && strtotime($subscription->subscriptionEndDate->format('Y-m-d')) <= strtotime(date('Y-m-d'))) {
 					$subscription->subscriptionEndDate = Plugin::getInstance()->getSubscriptions()->calculateNextSubscriptionEndDate($subscription);
+				}
+
+				//No enddate - then subscription was in trialmode. Calculate the period, and adjust the startdate to now, since the original date was for the trialperiod
+				if (!$subscription->subscriptionEndDate) {
+					$subscription->subscriptionEndDate = Plugin::getInstance()->getSubscriptions()->calculateNextSubscriptionEndDate($subscription);
+					$subscription->dateStarted = new DateTime('now');
 				}
 
 				Craft::$app->getElements()->saveElement($subscription);
