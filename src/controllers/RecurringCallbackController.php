@@ -120,7 +120,6 @@ class RecurringCallbackController extends BaseController
 
 		//If authorization failed
 		if ($type === TransactionRecord::TYPE_AUTHORIZE && $status === TransactionRecord::STATUS_FAILED) {
-
 			$subscription->isSuspended = true;
 			$subscription->dateSuspended = new DateTime('now');
 
@@ -132,12 +131,10 @@ class RecurringCallbackController extends BaseController
 			if ($this->hasEventHandlers(self::EVENT_AFTER_FAILED_SUBSCRIPTION_AUTHORIZE)) {
 				$this->trigger(self::EVENT_AFTER_FAILED_SUBSCRIPTION_AUTHORIZE, $eventData);
 			}
-
 		}
 
 		//If capture failed
 		if ($type === TransactionRecord::TYPE_CAPTURE && $status === TransactionRecord::STATUS_FAILED) {
-
 			$subscription->isSuspended = true;
 			$subscription->dateSuspended = new DateTime('now');
 
@@ -150,11 +147,10 @@ class RecurringCallbackController extends BaseController
 			if ($this->hasEventHandlers(self::EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE)) {
 				$this->trigger(self::EVENT_AFTER_FAILED_SUBSCRIPTION_CAPTURE, $eventData);
 			}
-
 		}
 
 		//If authorize was success
-		if($type === TransactionRecord::TYPE_AUTHORIZE && $status === TransactionRecord::STATUS_SUCCESS){
+		if ($type === TransactionRecord::TYPE_AUTHORIZE && $status === TransactionRecord::STATUS_SUCCESS) {
 			$subscription->isSuspended = false;
 			$subscription->dateSuspended = null;
 
@@ -170,7 +166,7 @@ class RecurringCallbackController extends BaseController
 
 
 		//If capture was success
-		if($type === TransactionRecord::TYPE_CAPTURE && $status === TransactionRecord::STATUS_SUCCESS){
+		if ($type === TransactionRecord::TYPE_CAPTURE && $status === TransactionRecord::STATUS_SUCCESS) {
 			$subscription->isSuspended = false;
 			$subscription->dateSuspended = null;
 

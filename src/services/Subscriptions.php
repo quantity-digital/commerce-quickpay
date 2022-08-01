@@ -312,7 +312,7 @@ class Subscriptions extends Component
 		$transaction->amount = $eventData->amount;
 
 		$headers = [
-			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $transaction->hash)
+			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/recurring/notify/' . $transaction->hash)
 		];
 
 		$response = $this->api->setHeaders($headers)->post("/subscriptions/{$subscription->quickpayReference}/recurring", [
