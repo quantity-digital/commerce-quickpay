@@ -24,9 +24,9 @@
 		}
 	],
 	"require": {
-		"craftcms/cms": "^3.5",
-		"craftcms/commerce": "^3.2",
-		"quickpay/quickpay-php-client": "^1.0"
+		"craftcms/cms": "^4.0",
+		"craftcms/commerce": "^4.0",
+		"quickpay/quickpay-php-client": "^2.0"
 	},
 	"require-dev": {
 		"roave/security-advisories": "dev-master"
