@@ -4,7 +4,6 @@ namespace QD\commerce\quickpay\services;
 
 use Craft;
 use craft\base\Component;
-use QD\commerce\quickpay\Plugin;
 use QuickPay\QuickPay;
 
 class Api extends Component

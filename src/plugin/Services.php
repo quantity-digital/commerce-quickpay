@@ -1,16 +1,14 @@
 <?php
 
-namespace QD\commerce\quickpay\base;
+namespace QD\commerce\quickpay\plugin;
 
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\services\Api;
 use QD\commerce\quickpay\services\Payments;
-use QD\commerce\quickpay\services\Plans;
-use QD\commerce\quickpay\services\PlanTypes;
 use QD\commerce\quickpay\services\Subscriptions;
 use QD\commerce\quickpay\services\Orders;
 
-trait PluginTrait
+trait Services
 {
 	public function initComponents()
 	{
@@ -19,9 +17,6 @@ trait PluginTrait
 			'api'      		=> Api::class,
 			'gateway'  		=> Gateway::class,
 			'orders'  		=> Orders::class,
-			'subscriptions' => Subscriptions::class,
-			'planTypes' 	=> PlanTypes::class,
-			'plans' 		=> Plans::class
 		]);
 	}
 
@@ -56,22 +51,5 @@ trait PluginTrait
 	{
 		return $this->get('orders');
 	}
-
-	/**
-	 * @return Subscriptions The Subscriptions class
-	 */
-	public function getSubscriptions()
-	{
-		return $this->get('subscriptions');
-	}
-
-	public function getPlanTypes()
-	{
-		return $this->get('planTypes');
-	}
-
-	public function getPlans()
-	{
-		return $this->get('plans');
-	}
 }
+

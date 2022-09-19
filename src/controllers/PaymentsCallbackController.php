@@ -4,7 +4,6 @@ namespace QD\commerce\quickpay\controllers;
 
 use Craft;
 use craft\commerce\controllers\BaseController;
-use craft\commerce\elements\Order;
 use craft\commerce\Plugin;
 use craft\helpers\Json;
 use QD\commerce\quickpay\Plugin as QuickpayPlugin;

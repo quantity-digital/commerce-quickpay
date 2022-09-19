@@ -3,7 +3,6 @@
 namespace QD\commerce\quickpay\services;
 
 use craft\base\Component;
-use craft\commerce\base\SubscriptionGateway;
 use craft\commerce\models\Transaction;
 use craft\commerce\services\Gateways;
 use craft\commerce\elements\Order;
@@ -14,8 +13,6 @@ use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\CaptureResponse;
 use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
-use craft\web\ServiceUnavailableHttpException;
-use QD\commerce\quickpay\gateways\Subscriptions;
 use QD\commerce\quickpay\responses\RefundResponse;
 use yii\base\Exception;
 
