@@ -3,29 +3,38 @@
 namespace QD\commerce\quickpay\queue;
 
 use Craft;
+use craft\commerce\base\GatewayInterface as BaseGatewayInterface;
 use craft\queue\BaseJob;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\records\Transaction as TransactionRecord;
+use \craft\Commerce\models\Transaction;
+use \craft\Commerce\elements\Order;
+use \yii\queue\Queue;
+use \yii\queue\QueueInterface;
+use Error;
 
 class CapturePayment extends BaseJob
 {
+    public Transaction $transaction;
+
     /**
-     * @var \craft\Commerce\models\Transaction Transaction
+     * Encapsulates the Ttr
+     *
+     * @return integer
      */
-    public $transaction;
-
-    public function canRetry($attempt, $error)
-    {
-        $attempts = 5;
-        return $attempt < $attempts;
-    }
-
-    public function getTtr()
+    public function getTtr(): int
     {
         return 300;
     }
 
-    public function execute($queue)
+    /**
+     * TODO: why can I not type this $queue
+     * Executes the transaction
+     *
+     * @param Queue|QueueInterface $queue
+     * @return void
+     */
+    public function execute($queue): void
     {
         $order = $this->transaction->order;
         $gateway = $order->getGateway();
@@ -57,12 +66,22 @@ class CapturePayment extends BaseJob
     // Protected Methods
     // =========================================================================
 
+    /**
+     * Encapsulates the default description
+     *
+     * @return string
+     */
     protected function defaultDescription(): string
     {
         return 'Capture quickpay payment';
     }
 
-    protected function reAddToQueue()
+    /**
+     * Adds the transaction to the queue, after a 300 ms delay
+     *
+     * @return void
+     */
+    protected function reAddToQueue(): void
     {
         Craft::$app->getQueue()->delay(300)->push(new CapturePayment(
             [
@@ -71,15 +90,19 @@ class CapturePayment extends BaseJob
         ));
     }
 
-    protected function updateOrderStatus($order, $gateway)
+    /**
+     * Updates order status
+     *
+     * @param Order $order to update
+     * @param Gateway $gateway
+     * @return void
+     * @throws Throwable
+     */
+    protected function updateOrderStatus(Order $order, BaseGatewayInterface $gateway): void
     {
         $orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($gateway->afterCaptureStatus);
         $order->orderStatusId = $orderStatus->id;
-        try {
-            Craft::$app->getElements()->saveElement($order);
-        } catch (\Throwable $th) {
-            throw $th;
-        }
-        return;
+
+        Craft::$app->getElements()->saveElement($order);
     }
 }

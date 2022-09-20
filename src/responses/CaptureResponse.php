@@ -9,20 +9,23 @@ class CaptureResponse implements RequestResponseInterface
 	/**
 	 * @var
 	 */
-	protected $data = [];
+	protected mixed $data = [];
+
 	/**
 	 * @var string
 	 */
-	private $_redirect = '';
+	private string $_redirect = '';
+
 	/**
 	 * @var bool
 	 */
-	private $_processing = false;
+	private bool $_processing = false;
 
 	/**
+	 * TODO: I cannot type this
 	 * Response constructor.
 	 *
-	 * @param $data
+	 * @param mixed $data
 	 */
 	public function __construct($data)
 	{
@@ -32,12 +35,24 @@ class CaptureResponse implements RequestResponseInterface
 	// Public Properties
 	// =========================================================================
 
-	public function setRedirectUrl(string $url)
+	/**
+	 * Encapsulates the _redirect
+	 *
+	 * @param string $url
+	 * @return void
+	 */
+	public function setRedirectUrl(string $url): void
 	{
 		$this->_redirect = $url;
 	}
 
-	public function setProcessing(bool $status)
+	/**
+	 * Encapsulates the _processing
+	 *
+	 * @param boolean $status
+	 * @return void
+	 */
+	public function setProcessing(bool $status): void
 	{
 		$this->_processing = $status;
 	}
@@ -50,7 +65,8 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function isSuccessful(): bool
 	{
-		if (isset($this->data->message) && strpos($this->data->message, 'Not found:') !== false) {
+		$message = $this->data->message;
+		if (isset($message) && strpos($message, 'Not found:')) {
 			return false;
 		}
 
@@ -111,11 +127,8 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		if (empty($this->data->id)) {
-			return '';
-		}
-
-		return (string)$this->data->id;
+		$id = $this->data->id;
+		return (string)$id ?? '';
 	}
 
 	/**
@@ -126,7 +139,7 @@ class CaptureResponse implements RequestResponseInterface
 	public function getCode(): string
 	{
 		if (isset($this->data->errors)) {
-			return $this->data->error_code ? $this->data->error_code : '';
+			return $this->data->error_code ?? '500';
 		}
 
 		return '200';
@@ -137,7 +150,7 @@ class CaptureResponse implements RequestResponseInterface
 	 *
 	 * @return mixed
 	 */
-	public function getData()
+	public function getData(): mixed
 	{
 		return $this->data;
 	}
@@ -157,8 +170,11 @@ class CaptureResponse implements RequestResponseInterface
 	 *
 	 * @return mixed
 	 */
-	public function redirect()
+	public function redirect(): void
 	{
-		return false;
+		
+		
+		//TODO: the base class require void
+		// return false;
 	}
 }

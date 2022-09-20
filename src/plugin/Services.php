@@ -10,7 +10,12 @@ use QD\commerce\quickpay\services\Orders;
 
 trait Services
 {
-	public function initComponents()
+	/**
+	 * Init components
+	 *
+	 * @return void
+	 */
+	public function initComponents(): void
 	{
 		$this->setComponents([
 			'payments' 		=> Payments::class,
@@ -23,15 +28,16 @@ trait Services
 	/**
 	 * @return Payments The Payments service
 	 */
-	public function getPayments()
+	public function getPayments(): Payments
 	{
 		return $this->get('payments');
 	}
 
 	/**
 	 * @return Api The Api service
+	 * TODO: what does the test mean?
 	 */
-	public function getApi()
+	public function getApi(): Api
 	{
 		return $this->get('api', 'test');
 	}
@@ -39,7 +45,7 @@ trait Services
 	/**
 	 * @return Gateway The Gateway class
 	 */
-	public function getGetway()
+	public function getGetway(): Gateway
 	{
 		return $this->get('gateway');
 	}
@@ -47,7 +53,7 @@ trait Services
 	/**
 	 * @return Orders The Order class
 	 */
-	public function getOrders()
+	public function getOrders(): Orders
 	{
 		return $this->get('orders');
 	}

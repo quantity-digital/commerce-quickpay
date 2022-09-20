@@ -5,6 +5,7 @@ namespace QD\commerce\quickpay\services;
 use Craft;
 use craft\base\Component;
 use craft\commerce\elements\Order;
+use craft\commerce\models\Transaction;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\records\Transaction as TransactionRecord;
 use QD\commerce\quickpay\gateways\Gateway;
@@ -12,7 +13,13 @@ use QD\commerce\quickpay\queue\CapturePayment;
 
 class Orders extends Component
 {
-	public function addAutoCaptureJob($event)
+	/**
+	 * Adds an autocapture job
+	 *
+	 * @param mixed $event
+	 * @return void
+	 */
+	public function addAutoCaptureJob(mixed $event): void
 	{
 		$order = $event->order;
 		$orderstatus = $order->getOrderStatus();
@@ -31,22 +38,30 @@ class Orders extends Component
 		}
 	}
 
-	public function getOrderById($id)
+	/**
+	 * Queries database for order by id
+	 *
+	 * @param string $id
+	 * @return Order
+	 */
+	public function getOrderById(string $id): Order
 	{
 		return CommercePlugin::getInstance()->getOrders()->getOrderById($id);
 	}
 
-	public function getSuccessfulTransactionForOrder(Order $order)
+	/**
+	 * Gets the first successful transaction on an order
+	 *
+	 * @param Order $order
+	 * @return Transaction|boolean
+	 */
+	public function getSuccessfulTransactionForOrder(Order $order): Transaction|bool
 	{
 		$transactions = $order->getTransactions();
 		usort($transactions, array($this, 'dateCompare'));
 
 		foreach ($transactions as $transaction) {
-
-			if (
-				$transaction->status === TransactionRecord::STATUS_SUCCESS
-				&& $transaction->type === TransactionRecord::TYPE_AUTHORIZE
-			) {
+			if ($transaction->isSuccessful()) {
 				return $transaction;
 			}
 		}
@@ -54,14 +69,28 @@ class Orders extends Component
 		return false;
 	}
 
-	public function enableCalculation($order)
+
+	/**
+	 * Set order to recalculation mode, and updates cart search indexes
+	 *
+	 * @param Order $order
+	 * @return void
+	 */
+	public function enableCalculation(Order $order): void
 	{
 		$order->setRecalculationMode(Order::RECALCULATION_MODE_ALL);
 		$updateCartSearchIndexes = CommercePlugin::getInstance()->getSettings()->updateCartSearchIndexes;
 		Craft::$app->getElements()->saveElement($order, false, false, $updateCartSearchIndexes);
 	}
 
-	private static function dateCompare($element1, $element2)
+	/**
+	 * Compare: compares the creation date of two Transactions
+	 *
+	 * @param Transaction $element1
+	 * @param Transaction $element2
+	 * @return integer
+	 */
+	private static function dateCompare(Transaction $element1, Transaction $element2): int
 	{
 		$datetime1 = date_timestamp_get($element1['dateCreated']);
 		$datetime2 = date_timestamp_get($element2['dateCreated']);

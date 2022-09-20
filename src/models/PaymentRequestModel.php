@@ -3,6 +3,7 @@
 namespace QD\commerce\quickpay\models;
 
 use Craft;
+use craft\helpers\App;
 use craft\base\Model;
 use craft\commerce\elements\Order;
 use craft\commerce\helpers\Currency;
@@ -23,13 +24,23 @@ class PaymentRequestModel extends Model
 	public $paymentId;
 	private $transactionReference;
 
-	public function init()
+	/**
+	 * Inits the payment request
+	 *
+	 * @return void
+	 */
+	public function init(): void
 	{
 		parent::init();
 		$this->transactionReference = $this->transaction->hash;
 	}
 
-	public function getPayload()
+	/**
+	 * Get the payload
+	 *
+	 * @return mixed
+	 */
+	public function getPayload(): mixed
 	{
 		// Order info
 		$orderId = $this->order->reference;
@@ -69,7 +80,12 @@ class PaymentRequestModel extends Model
 		return $payload;
 	}
 
-	public function getLinkPayload()
+	/**
+	 * Get payload link
+	 *
+	 * @return mixed
+	 */
+	public function getLinkPayload(): mixed
 	{
 		//Get gateway
 		$gateway = $this->transaction->getGateway();
@@ -96,13 +112,13 @@ class PaymentRequestModel extends Model
 		}
 
 		//Is analyticsId defined in settings
-		$analyticsId = Craft::parseEnv($gateway->analyticsId);
+		$analyticsId = App::parseEnv($gateway->analyticsId);
 		if ($analyticsId) {
 			$payload['google_analytics_tracking_id'] = $analyticsId;
 		}
 
 		//Is brandingId defined in settings
-		$brandingId = Craft::parseEnv($gateway->brandingId);
+		$brandingId = App::parseEnv($gateway->brandingId);
 		if ($brandingId) {
 			$payload['branding_id'] = $brandingId;
 		}
@@ -113,7 +129,13 @@ class PaymentRequestModel extends Model
 		return $payload;
 	}
 
-	private function apply3ds($paymentMethods)
+	/**
+	 * Applies 3d to the front of all the payment methods
+	 *
+	 * @param array $paymentMethods
+	 * @return array
+	 */
+	private function apply3ds(array $paymentMethods): array
 	{
 		//Which payment types is allowed to have 3D-secure
 		$allowed3ds = [
@@ -136,12 +158,23 @@ class PaymentRequestModel extends Model
 		return $paymentMethods;
 	}
 
+	/**
+	 * Gets the transaction reference
+	 *
+	 * @return string
+	 */
 	public function getTransactionReference(): string
 	{
 		return $this->transactionReference;
 	}
 
-	public function setPaymentID($id)
+	/**
+	 * Sets the paymentID
+	 *
+	 * @param string $id
+	 * @return void
+	 */
+	public function setPaymentID(string $id): void
 	{
 		$this->paymentId = $id;
 	}
@@ -149,7 +182,7 @@ class PaymentRequestModel extends Model
 	/**
 	 * @inheritdoc
 	 */
-	public function rules()
+	public function rules(): array
 	{
 		return [
 			[['order'], 'required'],

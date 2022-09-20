@@ -9,22 +9,24 @@ class RefundResponse implements RequestResponseInterface
 	/**
 	 * @var
 	 */
-	protected $data = [];
+	protected mixed $data = [];
+
 	/**
 	 * @var string
 	 */
-	private $_redirect = '';
+	private string $_redirect = '';
+
 	/**
 	 * @var bool
 	 */
-	private $_processing = false;
+	private bool $_processing = false;
 
 	/**
 	 * Response constructor.
 	 *
 	 * @param $data
 	 */
-	public function __construct($data)
+	public function __construct(mixed $data)
 	{
 		$this->data = $data;
 	}
@@ -32,12 +34,24 @@ class RefundResponse implements RequestResponseInterface
 	// Public Properties
 	// =========================================================================
 
-	public function setRedirectUrl(string $url)
+	/**
+	 * Encapsulates _redirect
+	 *
+	 * @param string $url
+	 * @return void
+	 */
+	public function setRedirectUrl(string $url): void
 	{
 		$this->_redirect = $url;
 	}
 
-	public function setProcessing(bool $status)
+	/**
+	 * Encapsulates _processing
+	 *
+	 * @param boolean $status
+	 * @return void
+	 */
+	public function setProcessing(bool $status): void
 	{
 		$this->_processing = $status;
 	}
@@ -107,11 +121,8 @@ class RefundResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		if (empty($this->data->id)) {
-			return '';
-		}
-
-		return (string)$this->data->id;
+		$id = $this->data->id;
+		return (string) $id ?? '';
 	}
 
 	/**
@@ -122,7 +133,7 @@ class RefundResponse implements RequestResponseInterface
 	public function getCode(): string
 	{
 		if (isset($this->data->errors)) {
-			return $this->data->error_code ? $this->data->error_code : '';
+			return $this->data->error_code ?? '500';
 		}
 
 		return '200';
@@ -133,7 +144,7 @@ class RefundResponse implements RequestResponseInterface
 	 *
 	 * @return mixed
 	 */
-	public function getData()
+	public function getData(): mixed
 	{
 		return $this->data;
 	}
@@ -151,10 +162,10 @@ class RefundResponse implements RequestResponseInterface
 	/**
 	 * Perform the redirect.
 	 *
-	 * @return mixed
 	 */
-	public function redirect()
+	public function redirect(): void
 	{
-		return false;
+		//TODO: this should return void
+		// return false;
 	}
 }

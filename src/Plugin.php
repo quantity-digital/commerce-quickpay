@@ -3,7 +3,6 @@
 namespace QD\commerce\quickpay;
 
 use Craft;
-use craft\commerce\elements\db\OrderQuery;
 use craft\commerce\elements\Order;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
@@ -16,8 +15,7 @@ use craft\events\RegisterComponentTypesEvent;
 use yii\base\Event;
 use craft\events\DefineBehaviorsEvent;
 use QD\commerce\quickpay\plugin\Services;
-use QD\commerce\quickpay\behaviors\OrderBehavior;
-use QD\commerce\quickpay\behaviors\OrderQueryBehavior;
+use QD\commerce\quickpay\behaviors\TransactionBehavior;
 
 class Plugin extends \craft\base\Plugin
 {
@@ -26,12 +24,15 @@ class Plugin extends \craft\base\Plugin
 	// Static Properties
 	// =========================================================================
 
-	public static $plugin;
+	/**
+	 * @var Plugin
+	 */
+	public static Plugin $plugin;
 
 	/**
 	 * @var bool
 	 */
-	public static $commerceInstalled = false;
+	public static bool $commerceInstalled = false;
 
 	// Public Properties
 	// =========================================================================
@@ -39,9 +40,9 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritDoc
 	 */
-	public $schemaVersion = '2.2.2';
-	public $hasCpSettings = false;
-	public $hasCpSection = true;
+	public string $schemaVersion = '2.2.2';
+	public bool $hasCpSettings = false;
+	public bool $hasCpSection = true;
 
 	// Public Methods
 	// =========================================================================
@@ -49,7 +50,7 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritdoc
 	 */
-	public function init()
+	public function init(): void
 	{
 		parent::init();
 
@@ -61,15 +62,24 @@ class Plugin extends \craft\base\Plugin
 
 		// Install event listeners
 		$this->installEventListeners();
-
 	}
 
-	protected function installEventListeners()
+	/**
+	 * Install eventlisteners
+	 *
+	 * @return void
+	 */
+	protected function installEventListeners(): void
 	{
-
 		$this->installGlobalEventListeners();
 	}
 
+
+	/**
+	 * Install global eventlistners
+	 *
+	 * @return void
+	 */
 	public function installGlobalEventListeners()
 	{
 		Event::on(
@@ -91,18 +101,10 @@ class Plugin extends \craft\base\Plugin
 				 * Order element behaviours
 				 */
 				Event::on(
-					Order::class,
+					Transaction::class,
 					Order::EVENT_DEFINE_BEHAVIORS,
 					function (DefineBehaviorsEvent $e) {
-						$e->behaviors['commerce-quickpay.attributes'] = OrderBehavior::class;
-					}
-				);
-
-				Event::on(
-					OrderQuery::class,
-					OrderQuery::EVENT_DEFINE_BEHAVIORS,
-					function (DefineBehaviorsEvent $e) {
-						$e->behaviors['commerce-quickpay.queryparams'] = OrderQueryBehavior::class;
+						$e->behaviors['commerce-quickpay.attributes'] = TransactionBehavior::class;
 					}
 				);
 
@@ -119,7 +121,12 @@ class Plugin extends \craft\base\Plugin
 		);
 	}
 
-	protected function installSiteEventListeners()
+	/**
+	 * Install site eventlisteners
+	 *
+	 * @return void
+	 */
+	protected function installSiteEventListeners(): void
 	{
 		Event::on(
 			UrlManager::class,
@@ -134,6 +141,11 @@ class Plugin extends \craft\base\Plugin
 		);
 	}
 
+	/**
+	 * Creates nav item array
+	 *
+	 * @return array
+	 */
 	public function getCpNavItem(): array
 	{
 		$navItems = parent::getCpNavItem();

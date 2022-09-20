@@ -2,24 +2,29 @@
 
 namespace QD\commerce\quickpay\services;
 
-use Craft;
+use craft\helpers\App;
+use craft\commerce\base\GatewayInterface as BaseGatewayInterface;
 use craft\base\Component;
 use QuickPay\QuickPay;
+use stdClass;
 
 class Api extends Component
 {
 
-	private $client;
-	private $gateway;
+	private QuickPay $client;
+	private BaseGatewayInterface $gateway;
 
 	// Public Methods
 	// =========================================================================
 
-	public function init($gateway = null)
-	{
-	}
 
-	public function setGateway($gateway)
+	/**
+	 * Set client, and creates the client
+	 *
+	 * @param BaseGatewayInterface $gateway
+	 * @return Api this so chaining can occur
+	 */
+	public function setGateway(BaseGatewayInterface $gateway): Api
 	{
 		$this->gateway = $gateway;
 		$this->client = new QuickPay(":" . $this->getApiKey());
@@ -27,27 +32,55 @@ class Api extends Component
 		return $this;
 	}
 
-	public function get($url, $payload = [])
+	/**
+	 * GET: queries the client with a get request
+	 *
+	 * @param string $url
+	 * @param array $payload
+	 * @return stdClass
+	 */
+	public function get(string $url, mixed $payload = []): stdClass
 	{
 		$response = $this->client->request->get($url, $payload);
 
 		return $response->asObject();
 	}
 
-	public function post($url, $payload = [])
+	/**
+	 * POST: queries the client with a post request
+	 *
+	 * @param string $url
+	 * @param mixed $payload
+	 * @return stdClass
+	 */
+	public function post(string $url, mixed $payload = []): stdClass
 	{
 		$response = $this->client->request->post($url, $payload);
 
 		return $response->asObject();
 	}
 
-	public function delete($url, $payload = [])
+	/**
+	 * DELETE: queries the client with a post request
+	 *
+	 * @param string $url
+	 * @param mixed $payload
+	 * @return stdClass
+	 */
+	public function delete(string $url, mixed $payload = []): stdClass
 	{
 		$response = $this->client->request->delete($url, $payload);
 		return $response->asObject();
 	}
 
-	public function put($url, $payload = [])
+	/**
+	 * PUT: queries the client with a put request
+	 *
+	 * @param string $url
+	 * @param mixed $payload
+	 * @return stdClass
+	 */
+	public function put(string $url, mixed $payload = []): stdClass
 	{
 		$response = $this->client->request->put($url, $payload);
 
@@ -56,14 +89,25 @@ class Api extends Component
 		}
 	}
 
-	public function setHeaders($headers)
+	/**
+	 * Set headers
+	 *
+	 * @param array $headers
+	 * @return Api
+	 */
+	public function setHeaders(array $headers): Api
 	{
 		$this->client->setHeaders($headers);
 		return $this;
 	}
 
-	private function getApiKey()
+	/**
+	 * Get the api key from the gateway
+	 *
+	 * @return string
+	 */
+	private function getApiKey(): string
 	{
-		return Craft::parseEnv($this->gateway->api_key);
+		return App::parseEnv($this->gateway->api_key);
 	}
 }

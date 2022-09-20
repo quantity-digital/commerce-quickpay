@@ -14,19 +14,31 @@ use QD\commerce\quickpay\responses\CaptureResponse;
 use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
 use QD\commerce\quickpay\responses\RefundResponse;
+use stdClass;
 use yii\base\Exception;
 
 class Payments extends Component
 {
 
-	public $api;
+	public Api $api;
 
-	public function init()
+	/**
+	 * Inits the service
+	 * 
+	 * @return void
+	 */
+	public function init(): void
 	{
 		$this->api = Plugin::$plugin->getApi();
 	}
 
-	public function initiatePayment(PaymentRequestModel $paymentRequest)
+	/**
+	 * Initiates payment
+	 *
+	 * @param PaymentRequestModel $paymentRequest
+	 * @return stdClass
+	 */
+	public function initiatePayment(PaymentRequestModel $paymentRequest): stdClass
 	{
 		$payload = $paymentRequest->getPayload();
 
@@ -36,7 +48,14 @@ class Payments extends Component
 		return $request;
 	}
 
-	public function getPaymentLink(PaymentRequestModel $paymentRequest, $request)
+	/**
+	 * Creates a payment link
+	 *
+	 * @param PaymentRequestModel $paymentRequest
+	 * @param stdClass $request
+	 * @return stdClass
+	 */
+	public function getPaymentLink(PaymentRequestModel $paymentRequest, stdClass $request): stdClass
 	{
 		//Create link to payment (redirect to it)
 		$amount = $paymentRequest->getLinkPayload();
@@ -45,7 +64,14 @@ class Payments extends Component
 		return $link;
 	}
 
-	public function intiatePaymentFromGateway(Transaction $transaction)
+
+	/**
+	 * Initiates payment from Gateway
+	 *
+	 * @param Transaction $transaction
+	 * @return PaymentResponse|boolean
+	 */
+	public function intiatePaymentFromGateway(Transaction $transaction): PaymentResponse|bool
 	{
 		//Set gateway for API
 		$this->api->setGateway($transaction->getGateway());
@@ -81,6 +107,12 @@ class Payments extends Component
 		return $response;
 	}
 
+	/**
+	 * Captures a transaction from gateway
+	 *
+	 * @param Transaction $transaction
+	 * @return CaptureResponse
+	 */
 	public function captureFromGateway(Transaction $transaction): CaptureResponse
 	{
 		$order                = $transaction->getOrder();
@@ -100,6 +132,7 @@ class Payments extends Component
 			$transaction->paymentAmount = $amount;
 		}
 
+		//multiplied by 100 because industry standard is to save the amount in "cents"
 		$response = $this->api->post("/payments/{$authorizedTransation->reference}/capture", [
 			'amount' => $amount * 100
 		]);
@@ -107,11 +140,18 @@ class Payments extends Component
 		return new CaptureResponse($response);
 	}
 
+	/**
+	 * Refunds from gateway
+	 *
+	 * @param Transaction $transaction
+	 * @return RefundResponse
+	 */
 	public function refundFromGateway(Transaction $transaction): RefundResponse
 	{
 		$order                = $transaction->getOrder();
 		$this->api->setGateway($order->getGateway());
 
+		//multiplied by 100 because industry standard is to save the amount in "cents"
 		$amount     = (float)$transaction->amount * 100;
 		$response = $this->api->post("/payments/{$transaction->reference}/refund", [
 			'amount' => $amount
@@ -120,12 +160,19 @@ class Payments extends Component
 		return new RefundResponse($response);
 	}
 
-	public function cancelLinkFromGateway(Transaction $authTransaction)
+	/**
+	 * Get cancel link from gateway
+	 *
+	 * @param Transaction $authTransaction
+	 * @return void
+	 */
+	public function cancelLinkFromGateway(Transaction $authTransaction): void
 	{
 		$order = $authTransaction->getOrder();
 
 		$this->api->setGateway($order->getGateway());
 
+		//TODO: shouldn't this be returned?
 		$response = $this->api->delete("/payments/{$authTransaction->reference}/link");
 
 		$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order, $authTransaction);
@@ -143,20 +190,22 @@ class Payments extends Component
 	 *
 	 * @return Transaction|null
 	 */
-	public function getSuccessfulTransactionForOrder(Order $order)
+	public function getSuccessfulTransactionForOrder(Order $order): Transaction
 	{
 		foreach ($order->getTransactions() as $transaction) {
-
-			if (
-				$transaction->status === TransactionRecord::STATUS_SUCCESS
-				&& $transaction->type === TransactionRecord::TYPE_AUTHORIZE
-			) {
-
+			if ($transaction->isSuccessful()) {
 				return $transaction;
 			}
 		}
 	}
 
+	/**
+	 * TODO: how does it find the correct Gateway?
+	 * Returns the gatway of the customer?
+	 *
+	 * @return Gateway
+	 * @throws Exception when quickpay is not setup correctly
+	 */
 	public function getGateway(): Gateway
 	{
 		$gateways = new Gateways();
@@ -164,6 +213,7 @@ class Payments extends Component
 
 		foreach ($gateways->getAllCustomerEnabledGateways() as $gateway) {
 
+			// If it's an instance of QuickPay Gateway, we return it
 			if ($gateway instanceof Gateway) {
 				$quickpayGateway = $gateway;
 				break;

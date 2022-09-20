@@ -4,24 +4,27 @@ namespace QD\commerce\quickpay\responses;
 
 use Craft;
 use craft\commerce\base\RequestResponseInterface;
+use Error;
 
 class PaymentResponse implements RequestResponseInterface
 {
 	/**
 	 * @var
 	 */
-	protected $data = [];
+	protected mixed $data = [];
+
 	/**
 	 * @var string
 	 */
-	private $_redirect = '';
+	private string $_redirect = '';
+
 	/**
 	 * @var bool
 	 */
-	private $_processing = false;
+	private bool $_processing = false;
 
-	private $_error;
-	private $_code = 200;
+	private Error $_error;
+	private int $_code = 200;
 
 	/**
 	 * Response constructor.
@@ -47,12 +50,24 @@ class PaymentResponse implements RequestResponseInterface
 	// Public Properties
 	// =========================================================================
 
-	public function setRedirectUrl(string $url)
+	/**
+	 * Encapsulates _redirect
+	 *
+	 * @param string $url
+	 * @return void
+	 */
+	public function setRedirectUrl(string $url): void
 	{
 		$this->_redirect = $url;
 	}
 
-	public function setProcessing(bool $status)
+	/**
+	 * Encapsulates processing
+	 *
+	 * @param boolean $status
+	 * @return void
+	 */
+	public function setProcessing(bool $status): void
 	{
 		$this->_processing = $status;
 	}
@@ -126,11 +141,8 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		if (empty($this->data->id)) {
-			return '';
-		}
-
-		return (string)$this->data->id;
+		$id = $this->data->id;
+		return (string) $id ?? '';
 	}
 
 	/**
@@ -148,7 +160,7 @@ class PaymentResponse implements RequestResponseInterface
 	 *
 	 * @return mixed
 	 */
-	public function getData()
+	public function getData(): mixed
 	{
 		return $this->data;
 	}
@@ -160,11 +172,7 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function getMessage(): string
 	{
-		if ($this->_error) {
-			return $this->_error;
-		}
-
-		return '';
+		return $this->_error ?? '';
 	}
 
 	/**
@@ -172,9 +180,9 @@ class PaymentResponse implements RequestResponseInterface
 	 *
 	 * @return mixed
 	 */
-	public function redirect()
+	public function redirect(): void
 	{
-		return Craft::$app->getResponse()->redirect($this->_redirect)->send();
+		Craft::$app->getResponse()->redirect($this->_redirect)->send();
 	}
 
 }

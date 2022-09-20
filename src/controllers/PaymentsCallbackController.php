@@ -6,15 +6,18 @@ use Craft;
 use craft\commerce\controllers\BaseController;
 use craft\commerce\Plugin;
 use craft\helpers\Json;
+use craft\helpers\App;
+use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\Plugin as QuickpayPlugin;
 use yii\web\ForbiddenHttpException;
+use yii\web\Response;
 
 class PaymentsCallbackController extends BaseController
 {
 	/**
 	 * @inheritdoc
 	 */
-	public $allowAnonymous = [
+	public array $allowAnonymous = [
 		'continue' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE,
 		'notify' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE,
 		'cancel' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE
@@ -23,9 +26,14 @@ class PaymentsCallbackController extends BaseController
 	/**
 	 * @inheritdoc
 	 */
-	public $enableCsrfValidation = false;
+	public bool $enableCsrfValidation = false;
 
-	public function init()
+	/**
+	 * Init the Controller
+	 *
+	 * @return void
+	 */
+	public function init(): void
 	{
 		parent::init();
 	}
@@ -37,7 +45,7 @@ class PaymentsCallbackController extends BaseController
 	 * @throws \yii\web\BadRequestHttpException
 	 * @throws \yii\web\ForbiddenHttpException
 	 */
-	public function beforeAction($action)
+	public function beforeAction($action): bool
 	{
 		if (!parent::beforeAction($action)) {
 			return false;
@@ -46,13 +54,21 @@ class PaymentsCallbackController extends BaseController
 		return true;
 	}
 
-	public function actionContinue($transactionReference = null)
+	/**
+	 * TODO: Figure out what this does
+	 *
+	 * @param string|null $transactionReference
+	 * @return Response
+	 */
+	public function actionContinue(string $transactionReference = null): Response
 	{
 		//Get transaction and order
 		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
 		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
 		//Order is already paid
 		if ($order->getIsPaid()) {
+			// $reponse  = Craft::$app->getResponse()->redirect($order->returnUrl);
+			// $reponse->send();
 			return Craft::$app->getResponse()->redirect($order->returnUrl)->send();
 		}
 
@@ -71,7 +87,13 @@ class PaymentsCallbackController extends BaseController
 		return Craft::$app->getResponse()->redirect($order->returnUrl)->send();
 	}
 
-	public function actionCancel($transactionReference = null)
+	/**
+	 * TODO: figure out what this does 
+	 *
+	 * @param string|null $transactionReference
+	 * @return Response
+	 */
+	public function actionCancel(string $transactionReference = null): Response
 	{
 		//Get transaction and order
 		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
@@ -84,7 +106,13 @@ class PaymentsCallbackController extends BaseController
 		return Craft::$app->getResponse()->redirect($order->cancelUrl)->send();
 	}
 
-	public function actionNotify($transactionReference = null)
+	/**
+	 * TODO: Figure out what this does
+	 *
+	 * @param string|null $transactionReference
+	 * @return Response
+	 */
+	public function actionNotify(string $transactionReference = null): Response
 	{
 		if (!$transactionReference) {
 			throw new ForbiddenHttpException('Missing transaction reference.');
@@ -146,16 +174,16 @@ class PaymentsCallbackController extends BaseController
 	}
 
 	/**
-	 * Validate quickpay checksum
+	 * Validates the checksum
 	 *
-	 * @param [type] $checksum
-	 *
-	 * @return void
+	 * @param string $checksum
+	 * @param Gateway $gateway
+	 * @return boolean
 	 */
-	protected function validateSha256Checksum($checksum, $gateway)
+	protected function validateSha256Checksum(string $checksum, Gateway $gateway): bool
 	{
 		$base = file_get_contents("php://input");
-		$privateKey = Craft::parseEnv($gateway->private_key);
+		$privateKey = App::parseEnv($gateway->private_key);
 		return (hash_hmac("sha256", $base, $privateKey) === $checksum);
 	}
 }
