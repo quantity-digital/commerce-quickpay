@@ -34,11 +34,10 @@ trait Services
 
 	/**
 	 * @return Api The Api service
-	 * TODO: what does the test mean?
 	 */
 	public function getApi(): Api
 	{
-		return $this->get('api', 'test');
+		return $this->get('api');
 	}
 
 	/**
