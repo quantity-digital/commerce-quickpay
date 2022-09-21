@@ -121,8 +121,7 @@ class RefundResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		$id = $this->data->id;
-		return (string) $id ?? '';
+		return (string) $this->data->id ?? '';
 	}
 
 	/**
@@ -165,7 +164,5 @@ class RefundResponse implements RequestResponseInterface
 	 */
 	public function redirect(): void
 	{
-		//TODO: this should return void
-		// return false;
 	}
 }

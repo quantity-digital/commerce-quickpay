@@ -200,8 +200,7 @@ class Payments extends Component
 	}
 
 	/**
-	 * TODO: how does it find the correct Gateway?
-	 * Returns the gatway of the customer?
+	 * Returns the gatway of the customer
 	 *
 	 * @return Gateway
 	 * @throws Exception when quickpay is not setup correctly

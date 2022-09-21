@@ -30,7 +30,7 @@ class PaymentResponse implements RequestResponseInterface
 	 *
 	 * @param $data
 	 */
-	public function __construct($data)
+	public function __construct(mixed $data)
 	{
 		$this->data = $data;
 
@@ -140,8 +140,7 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		$id = $this->data->id;
-		return (string) $id ?? '';
+		return (string) $this->data->id ?? '';
 	}
 
 	/**

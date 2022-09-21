@@ -27,7 +27,7 @@ class CaptureResponse implements RequestResponseInterface
 	 *
 	 * @param mixed $data
 	 */
-	public function __construct($data)
+	public function __construct(mixed $data)
 	{
 		$this->data = $data;
 	}
@@ -126,8 +126,7 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function getTransactionReference(): string
 	{
-		$id = $this->data->id;
-		return (string)$id ?? '';
+		return (string)$this->data->id ?? '';
 	}
 
 	/**
@@ -167,13 +166,9 @@ class CaptureResponse implements RequestResponseInterface
 	/**
 	 * Perform the redirect.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	public function redirect(): void
 	{
-		
-		
-		//TODO: the base class require void
-		// return false;
 	}
 }
