@@ -3,7 +3,7 @@
 namespace QD\commerce\quickpay;
 
 use Craft;
-use craft\commerce\elements\Order;
+use craft\commerce\models\Transaction;
 use QD\commerce\quickpay\gateways\Gateway;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\events\RegisterUrlRulesEvent;
@@ -42,7 +42,6 @@ class Plugin extends \craft\base\Plugin
 	 */
 	public string $schemaVersion = '2.2.2';
 	public bool $hasCpSettings = false;
-	public bool $hasCpSection = true;
 
 	// Public Methods
 	// =========================================================================
@@ -98,13 +97,13 @@ class Plugin extends \craft\base\Plugin
 				$request = Craft::$app->getRequest();
 
 				/**
-				 * Order element behaviours
+				 * Transaction element behaviours
 				 */
 				Event::on(
 					Transaction::class,
-					Order::EVENT_DEFINE_BEHAVIORS,
-					function (DefineBehaviorsEvent $e) {
-						$e->behaviors['commerce-quickpay.attributes'] = TransactionBehavior::class;
+					Transaction::EVENT_DEFINE_BEHAVIORS,
+					function (DefineBehaviorsEvent $event) {
+						$event->behaviors['commerce-quickpay.attributes'] = TransactionBehavior::class;
 					}
 				);
 
@@ -112,10 +111,6 @@ class Plugin extends \craft\base\Plugin
 
 				if ($request->getIsSiteRequest() && !$request->getIsConsoleRequest()) {
 					$this->installSiteEventListeners();
-				}
-
-				if ($request->getIsCpRequest() && !$request->getIsConsoleRequest()) {
-					$this->installCpEventListeners();
 				}
 			}
 		);
@@ -139,19 +134,5 @@ class Plugin extends \craft\base\Plugin
 				]);
 			}
 		);
-	}
-
-	/**
-	 * Creates nav item array
-	 *
-	 * @return array
-	 */
-	public function getCpNavItem(): array
-	{
-		$navItems = parent::getCpNavItem();
-
-		$navItems['label'] = Craft::t('commerce-quickpay', 'Quickpay');
-
-		return $navItems;
 	}
 }
