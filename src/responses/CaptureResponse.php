@@ -65,8 +65,7 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function isSuccessful(): bool
 	{
-		$message = $this->data->message;
-		if (isset($message) && strpos($message, 'Not found:')) {
+		if (isset($this->data->message) && strpos($this->data->message, 'Not found:')) {
 			return false;
 		}
 

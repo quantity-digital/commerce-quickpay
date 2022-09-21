@@ -5,7 +5,6 @@ namespace QD\commerce\quickpay\plugin;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\services\Api;
 use QD\commerce\quickpay\services\Payments;
-use QD\commerce\quickpay\services\Subscriptions;
 use QD\commerce\quickpay\services\Orders;
 
 trait Services

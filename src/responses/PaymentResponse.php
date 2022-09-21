@@ -4,7 +4,6 @@ namespace QD\commerce\quickpay\responses;
 
 use Craft;
 use craft\commerce\base\RequestResponseInterface;
-use Error;
 
 class PaymentResponse implements RequestResponseInterface
 {
@@ -23,7 +22,7 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	private bool $_processing = false;
 
-	private Error $_error;
+	private string $_error = '';
 	private int $_code = 200;
 
 	/**
