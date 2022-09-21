@@ -20,7 +20,6 @@ use QD\commerce\quickpay\Plugin;
 
 class Gateway extends BaseGateway
 {
-
 	const SUPPORTS = [
 		'Authorize' => true,
 		'Capture' => true,
@@ -41,17 +40,17 @@ class Gateway extends BaseGateway
 	use GatewayTrait;
 
 	//Settings options
-	public string $api_key;
-	public string $private_key;
-	public string $analyticsId;
-	public string $brandingId;
-	public bool $autoCapture;
-	public bool $autoCaptureStatus;
-	public string $enableAutoStatus;
-	public string $afterCaptureStatus;
-	public string $paymentMethods;
-	public bool $enabled3ds;
-	public float $convertAmount;
+	public string $api_key = '';
+	public string $private_key = '';
+	public string $analyticsId = '';
+	public string $brandingId = '';
+	public int $autoCapture = 0;
+	public bool $autoCaptureStatus = false;
+	public string $enableAutoStatus = '';
+	public string $afterCaptureStatus = '';
+	public string $paymentMethods = '';
+	public array $enabled3ds = [];
+	public float $convertAmount = 0;
 
 	// Settings
 	// =========================================================================
