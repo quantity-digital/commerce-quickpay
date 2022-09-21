@@ -8,12 +8,15 @@ use yii\base\Behavior;
 class TransactionBehavior extends Behavior
 {
 
+    /** @var Transaction */
+    public $owner;
+
     // Public Methods
     // =========================================================================
 
     public function isSuccessful(): bool
     {
-        return  $this->status === TransactionRecord::STATUS_SUCCESS
-            && $this->type === TransactionRecord::TYPE_AUTHORIZE;
+        return  $this->owner->status === TransactionRecord::STATUS_SUCCESS
+            && $this->owner->type === TransactionRecord::TYPE_AUTHORIZE;
     }
 }
