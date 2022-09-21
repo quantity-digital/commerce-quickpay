@@ -17,16 +17,12 @@ class PaymentsCallbackController extends BaseController
 	/**
 	 * @inheritdoc
 	 */
-	public array $allowAnonymous = [
+	public array|int|bool $allowAnonymous = [
 		'continue' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE,
 		'notify' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE,
 		'cancel' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE
 	];
-
-	/**
-	 * @inheritdoc
-	 */
-	public bool $enableCsrfValidation = false;
+    public $enableCsrfValidation = false;
 
 	/**
 	 * Init the Controller
@@ -55,7 +51,6 @@ class PaymentsCallbackController extends BaseController
 	}
 
 	/**
-	 * TODO: Figure out what this does
 	 *
 	 * @param string|null $transactionReference
 	 * @return Response
@@ -67,14 +62,12 @@ class PaymentsCallbackController extends BaseController
 		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
 		//Order is already paid
 		if ($order->getIsPaid()) {
-			// $reponse  = Craft::$app->getResponse()->redirect($order->returnUrl);
-			// $reponse->send();
-			return Craft::$app->getResponse()->redirect($order->returnUrl)->send();
+			return Craft::$app->getResponse()->redirect($order->returnUrl);
 		}
 
 		// If it's successful already, we're good.
 		if (Plugin::getInstance()->getTransactions()->isTransactionSuccessful($authTransaction)) {
-			return Craft::$app->getResponse()->redirect($order->returnUrl)->send();
+			return Craft::$app->getResponse()->redirect($order->returnUrl);
 		}
 
 		//Create a new transaction with processing
@@ -84,12 +77,10 @@ class PaymentsCallbackController extends BaseController
 		$transaction->message = 'Authorize request completed. Waiting for final confirmation from Quickpay.';
 		Plugin::getInstance()->transactions->saveTransaction($transaction);
 
-		return Craft::$app->getResponse()->redirect($order->returnUrl)->send();
+		return Craft::$app->getResponse()->redirect($order->returnUrl);
 	}
 
 	/**
-	 * TODO: figure out what this does 
-	 *
 	 * @param string|null $transactionReference
 	 * @return Response
 	 */
@@ -103,16 +94,16 @@ class PaymentsCallbackController extends BaseController
 		QuickpayPlugin::getInstance()->orders->enableCalculation($order);
 		QuickpayPlugin::getInstance()->payments->cancelLinkFromGateway($authTransaction);
 
-		return Craft::$app->getResponse()->redirect($order->cancelUrl)->send();
+		return Craft::$app->getResponse()->redirect($order->cancelUrl);
 	}
 
 	/**
 	 * TODO: Figure out what this does
 	 *
 	 * @param string|null $transactionReference
-	 * @return Response
+	 * @return void
 	 */
-	public function actionNotify(string $transactionReference = null): Response
+	public function actionNotify(string $transactionReference = null): void
 	{
 		if (!$transactionReference) {
 			throw new ForbiddenHttpException('Missing transaction reference.');
