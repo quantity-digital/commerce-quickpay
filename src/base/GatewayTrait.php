@@ -38,11 +38,11 @@ trait GatewayTrait
 	 * @param BasePaymentForm $sourceData
 	 * @param int             $userId
 	 *
-	 * @return PaymentSource|bool
+	 * @return PaymentSource
 	 */
-	Public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource|bool
+	Public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
 	{
-		return false;
+		throw new NotImplementedException('Not implemented by the payment gateway');
 	}
 
 	/**
@@ -60,12 +60,12 @@ trait GatewayTrait
 	/**
 	 * Processes a webhook and return a response
 	 *
-	 * @return WebResponse|bool
+	 * @return WebResponse
 	 * @throws \Throwable if something goes wrong
 	 */
-	public function processWebHook(): WebResponse|bool
+	public function processWebHook(): WebResponse
 	{
-		return false;
+		throw new NotImplementedException('Not implemented by the payment gateway');
 	}
 
 	/**
