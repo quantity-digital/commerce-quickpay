@@ -6,7 +6,7 @@ This plugin provides an [QuickPay](https://www.quickpay.net/) integration for [C
 
 ## Requirements
 
-This plugin requires Craft CMS 3.5 and Craft Commerce 3.2.0 or later.
+This plugin requires PHP 8.0, Craft CMS ^4.0 and Craft Commerce ^4.0 or later.
 
 ## Installation
 
