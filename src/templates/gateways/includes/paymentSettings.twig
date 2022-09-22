@@ -1,4 +1,4 @@
-{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
+{% from "_includes/forms" import multiSelectField, booleanMenuField %}
 <h2>Payment settings</h2>
 <div class="flex-fields">
 	<div class="field width-50">
@@ -14,12 +14,13 @@
 	</div>
 
 	<div class="field width-50">
-		{{ lightswitchField({
+		{{ booleanMenuField({
 			label: "Enable 3D-Secure on payment methods that alow it"|t,
 			id: 'enabled3ds',
 			name: 'enabled3ds',
 			instructions: "If checked, all eligble payment methods 3D-secure will get it enabled. To see full list visit https://learn.quickpay.net/tech-talk/appendixes/payment-methods/#payment-methods"|t('commerce-quickpay'),
 			value: 1,
+        	includeEnvVars: true,
 			errors: gateway.getErrors('enabled3ds'),
 			on: (gateway.enabled3ds is defined) ? gateway.enabled3ds : 0,
 		}) }}

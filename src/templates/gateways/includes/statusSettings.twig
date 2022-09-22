@@ -1,9 +1,9 @@
-{% from "_includes/forms" import textField, lightswitchField, selectField, autosuggestField, multiSelectField %}
+{% from "_includes/forms" import selectizeField %}
 <h2>Order status handling</h2>
 <div class="flex-fields">
 	<div class="field width-50">
 		<div>
-			{{ selectField({
+			{{ selectizeField({
 				first: true,
 				label: 'Payment order status'|t('commerce-quickpay'),
 				instructions: 'What status should payment orders have'|t('commerce-quickpay'),
