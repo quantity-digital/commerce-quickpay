@@ -28,7 +28,7 @@ cd /path/to/my-project.test
 composer require quantity-digital/commerce-quickpay
 
 # tell Craft to install the plugin
-./craft install/plugin commerce-webshipper
+./craft install/plugin commerce-quickpay
 ```
 
 ## Setup
@@ -47,3 +47,4 @@ In order to delete payments, the API user in has to have the required permission
 * Capture on status change
 * Translate to aditional languages
 * On manual order, send paymentlink to customer
+* Subscriptions
