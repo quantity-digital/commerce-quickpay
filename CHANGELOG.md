@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Upgraded to Craft 4.0
 * Upgraded to Commerce 4.0
 * Upgraded to PHP 8.0
+* Changed selectFields to selectizedField
+* Changed lightswitchField to booleanMenu
 
 ### Fixed
 * Small logic changes
@@ -17,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 * Added docblocks and typing
 * Added TransactionBehavior, to centralize logic
+* Notice to README about Quickpay permissions
 
 ### Deleted
 * Removed everything related to subscriptions and plans

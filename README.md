@@ -37,6 +37,10 @@ To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, cr
 
 > **Tip:** The API Key and Private key key settings can be set to environment variables. See [Environmental Configuration](https://docs.craftcms.com/v3/config/environments.html) in the Craft docs for more information.
 
+## Notice
+
+In order to delete payments, the API user in has to have the required permissions.
+
 ## Roadmap
 
 * Autocapture on authorize (Purchase)
