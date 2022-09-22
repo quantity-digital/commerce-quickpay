@@ -49,7 +49,7 @@ class Gateway extends BaseGateway
 	public string $enableAutoStatus = '';
 	public string $afterCaptureStatus = '';
 	public string $paymentMethods = '';
-	public array $enabled3ds = [];
+	public bool $enabled3ds = false;
 	public float $convertAmount = 0;
 
 	// Settings

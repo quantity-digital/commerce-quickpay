@@ -9,9 +9,9 @@ use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\records\Transaction as TransactionRecord;
 use \craft\Commerce\models\Transaction;
 use \craft\Commerce\elements\Order;
+use craft\helpers\App;
 use \yii\queue\Queue;
 use \yii\queue\QueueInterface;
-use Error;
 
 class CapturePayment extends BaseJob
 {
@@ -39,7 +39,7 @@ class CapturePayment extends BaseJob
         $order = $this->transaction->order;
         $gateway = $order->getGateway();
 
-        if ($order->isPaid && $gateway->enableAutoStatus) {
+        if ($order->isPaid && App::parseBooleanEnv($gateway->enableAutoStatus)) {
             $this->updateOrderStatus($order, $gateway);
             $this->setProgress($queue, 1);
             return;
@@ -52,7 +52,7 @@ class CapturePayment extends BaseJob
 
             if ($child->status === TransactionRecord::STATUS_SUCCESS) {
                 $order->updateOrderPaidInformation();
-                if ($gateway->enableAutoStatus) {
+                if (App::parseBooleanEnv($gateway->enableAutoStatus)) {
                     $this->updateOrderStatus($order, $gateway);
                 }
             } else {
@@ -100,7 +100,7 @@ class CapturePayment extends BaseJob
      */
     protected function updateOrderStatus(Order $order, BaseGatewayInterface $gateway): void
     {
-        $orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle($gateway->afterCaptureStatus);
+        $orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus));
         $order->orderStatusId = $orderStatus->id;
 
         Craft::$app->getElements()->saveElement($order);

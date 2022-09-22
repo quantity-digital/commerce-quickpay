@@ -3,11 +3,11 @@
 namespace QD\commerce\quickpay\services;
 
 use Craft;
+use craft\helpers\App;
 use craft\base\Component;
 use craft\commerce\elements\Order;
 use craft\commerce\models\Transaction;
 use craft\commerce\Plugin as CommercePlugin;
-use craft\commerce\records\Transaction as TransactionRecord;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\queue\CapturePayment;
 
@@ -25,7 +25,7 @@ class Orders extends Component
 		$orderstatus = $order->getOrderStatus();
 		$gateway = $order->getGateway();
 
-		if ($gateway instanceof Gateway && $gateway->autoCapture && $gateway->autoCaptureStatus === $orderstatus->handle) {
+		if ($gateway instanceof Gateway && App::parseBooleanEnv($gateway->autoCapture) && App::parseEnv($gateway->autoCaptureStatus) === $orderstatus->handle) {
 			$transaction = $this->getSuccessfulTransactionForOrder($order);
 
 			if ($transaction && $transaction->canCapture()) {
