@@ -44,9 +44,9 @@ class Gateway extends BaseGateway
 	public string $private_key = '';
 	public string $analyticsId = '';
 	public string $brandingId = '';
-	public int $autoCapture = 0;
+	public bool $autoCapture = false;
 	public bool $autoCaptureStatus = false;
-	public string $enableAutoStatus = '';
+	public bool $enableAutoStatus = false;
 	public string $afterCaptureStatus = '';
 	public string $paymentMethods = '';
 	public bool $enabled3ds = false;
