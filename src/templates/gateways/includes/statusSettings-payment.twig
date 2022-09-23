@@ -8,7 +8,7 @@
 			name: 'autoCapture',
 			instructions: "If checked, payment will be autocaptured when status is changed"|t('commerce-quickpay'),
         	includeEnvVars: true,
-			value: 1,
+			value: (gateway.autoCapture is defined) ? gateway.autoCapture : 0,
 			errors: gateway.getErrors('autoCapture'),
 			on: (gateway.autoCapture is defined) ? gateway.autoCapture : 0,
 			toggle : 'autoCaptureToggle'
@@ -36,7 +36,7 @@
 			name: 'enableAutoStatus',
         	includeEnvVars: true,
 			instructions: "If enabled, the order status will update after capture is complete"|t('commerce-quickpay'),
-			value: 1,
+			value: (gateway.enableAutoStatus is defined) ? gateway.enableAutoStatus : 0,
 			errors: gateway.getErrors('enableAutoStatus'),
 			on: (gateway.enableAutoStatus is defined) ? gateway.enableAutoStatus : 0,
 			toggle : 'autoStatusToggle'
