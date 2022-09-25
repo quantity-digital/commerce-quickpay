@@ -13,6 +13,7 @@ use craft\commerce\models\payments\OffsitePaymentForm;
 use craft\commerce\models\PaymentSource;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\Transaction;
+use craft\commerce\errors\NotImplementedException;
 use craft\web\Response as WebResponse;
 use yii\base\NotSupportedException;
 
@@ -26,7 +27,7 @@ trait GatewayTrait
 	 *
 	 * @return string|null
 	 */
-	public function getPaymentFormHtml(array $params)
+	public function getPaymentFormHtml(array $params) : string
 	{
 		return '';
 	}
@@ -39,9 +40,9 @@ trait GatewayTrait
 	 *
 	 * @return PaymentSource
 	 */
-	public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
+	Public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
 	{
-		return false;
+		throw new NotImplementedException('Not implemented by the payment gateway');
 	}
 
 	/**
@@ -64,7 +65,7 @@ trait GatewayTrait
 	 */
 	public function processWebHook(): WebResponse
 	{
-		return false;
+		throw new NotImplementedException('Not implemented by the payment gateway');
 	}
 
 	/**
@@ -95,6 +96,7 @@ trait GatewayTrait
 	 *
 	 * @param Transaction $transaction The transaction
 	 * @return RequestResponseInterface
+	 * @throws NotImplementedException
 	 */
 	public function completePurchase(Transaction $transaction): RequestResponseInterface
 	{
@@ -113,7 +115,9 @@ trait GatewayTrait
 		throw new NotImplementedException('Not implemented by the payment gateway');
 	}
 
+	//============== Support errors occur because the trait is imported into the Gateway, which has the SUPPORTS array
 	/**
+	 * 
 	 * Returns true if gateway supports authorize requests.
 	 *
 	 * @return bool

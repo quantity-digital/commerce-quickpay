@@ -20,7 +20,6 @@ use QD\commerce\quickpay\Plugin;
 
 class Gateway extends BaseGateway
 {
-
 	const SUPPORTS = [
 		'Authorize' => true,
 		'Capture' => true,
@@ -41,17 +40,17 @@ class Gateway extends BaseGateway
 	use GatewayTrait;
 
 	//Settings options
-	public $api_key;
-	public $private_key;
-	public $analyticsId;
-	public $brandingId;
-	public $autoCapture;
-	public $autoCaptureStatus;
-	public $enableAutoStatus;
-	public $afterCaptureStatus;
-	public $paymentMethods;
-	public $enabled3ds;
-	public $convertAmount;
+	public string $api_key = '';
+	public string $private_key = '';
+	public string $analyticsId = '';
+	public string $brandingId = '';
+	public bool $autoCapture = false;
+	public string $autoCaptureStatus = '';
+	public bool $enableAutoStatus = false;
+	public string $afterCaptureStatus = '';
+	public array $paymentMethods = [];
+	public bool $enabled3ds = false;
+	public bool $convertAmount = false;
 
 	// Settings
 	// =========================================================================
@@ -75,10 +74,9 @@ class Gateway extends BaseGateway
 	 * @throws \Twig\Error\SyntaxError
 	 * @throws \yii\base\Exception
 	 */
-	public function getSettingsHtml()
+	public function getSettingsHtml(): string
 	{
 		//craft.commerce.orderStatuses.allOrderStatuses
-
 		foreach (CommercePlugin::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
 			$statusOptions[] = [
 				'value' => $status->handle,
@@ -172,8 +170,15 @@ class Gateway extends BaseGateway
 		return $response;
 	}
 
-	public function cancel(Transaction $transaction)
-	{
-		Plugin::$plugin->getPayments()->cancelFromGateway($transaction);
-	}
+	/**
+	 * TODO: Implement cancel functionality
+	 * Cancels a transaction
+	 *
+	 * @param Transaction $transaction
+	 * @return RequestResponseInterface
+	 */
+	// public function cancel(Transaction $transaction): RequestResponseInterface
+	// {
+	// 	Plugin::$plugin->getPayments()->cancelFromGateway($transaction);
+	// }
 }

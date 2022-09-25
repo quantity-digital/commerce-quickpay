@@ -26,34 +26,35 @@ class Log
     /**
      * @var bool
      */
-    public static $logToCraft = true;
+    public static bool $logToCraft = true;
 
     /**
      * @var bool
      */
-    public static $enableRotation = true;
+    public static bool $enableRotation = true;
 
     /**
      * @var int
      */
-    public static $maxFileSize = 10240; // in KB
+    public static int $maxFileSize = 10240; // in KB
 
     /**
      * @var int
      */
-    public static $maxLogFiles = 5;
+    public static int $maxLogFiles = 5;
 
     /**
      * @var bool
      */
-    public static $rotateByCopy = true;
+    public static bool $rotateByCopy = true;
 
     /**
      * Logs an info message to a file with the provided handle.
      *
      * @param string $message
+     * @return void
      */
-    public static function info(string $message)
+    public static function info(string $message): void
     {
         self::log($message, 'info');
     }
@@ -62,8 +63,9 @@ class Log
      * Logs an error message to a file with the provided handle.
      *
      * @param string $message
+     * @return void
      */
-    public static function error(string $message)
+    public static function error(string $message): void
     {
         self::log($message, 'error');
     }
@@ -73,8 +75,9 @@ class Log
      *
      * @param string $message
      * @param string $level
+     * @return void
      */
-    public static function log(string $message, string $level = 'info')
+    public static function log(string $message, string $level = 'info'): void
     {
         // Clear stat cache to ensure getting the real current file size and not a cached one.
         // This may result in rotating twice when cached file size is used on subsequent calls.
@@ -120,7 +123,9 @@ class Log
 
         // Only log to Craft if debug toolbar is not enabled, otherwise this will break it
         // https://github.com/putyourlightson/craft-blitz/issues/233
+
         $user = Craft::$app->getUser()->getIdentity();
+        //Not actually an error
         $debugToolbarEnabled = $user ? $user->getPreference('enableDebugToolbarForSite') : false;
 
         if (self::$logToCraft && !$debugToolbarEnabled) {
@@ -131,7 +136,13 @@ class Log
         }
     }
 
-    private static function rotateFiles($file)
+    /**
+     * Rotates the file
+     *
+     * @param string $file filepath of the file
+     * @return void
+     */
+    private static function rotateFiles(string $file): void
     {
         for ($i = self::$maxLogFiles; $i >= 0; --$i) {
             // $i == 0 is the original log file
@@ -154,7 +165,13 @@ class Log
         }
     }
 
-    private static function clearLogFile($rotateFile)
+    /**
+     * Clears the log file 
+     *
+     * @param string $rotateFile filename of the file to clear
+     * @return void
+     */
+    private static function clearLogFile(string $rotateFile): void
     {
         if ($filePointer = @fopen($rotateFile, 'a')) {
             @ftruncate($filePointer, 0);
@@ -162,12 +179,26 @@ class Log
         }
     }
 
-    private static function rotateByCopy($rotateFile, $newFile)
+    /**
+     * Copies content of rotateFile into the new file
+     *
+     * @param string $rotateFile file to copy from
+     * @param string $newFile file to copy to
+     * @return void
+     */
+    private static function rotateByCopy(string $rotateFile, string $newFile): void
     {
         @copy($rotateFile, $newFile);
     }
 
-    private static function rotateByRename($rotateFile, $newFile)
+    /**
+     * Renames the rotateFile to newFile
+     *
+     * @param string $rotateFile File to rename
+     * @param string $newFile Name to give to the file
+     * @return void
+     */
+    private static function rotateByRename(string $rotateFile, string $newFile): void
     {
         @rename($rotateFile, $newFile);
     }

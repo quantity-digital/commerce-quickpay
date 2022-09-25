@@ -6,7 +6,7 @@ This plugin provides an [QuickPay](https://www.quickpay.net/) integration for [C
 
 ## Requirements
 
-This plugin requires Craft CMS 3.5 and Craft Commerce 3.2.0 or later.
+This plugin requires PHP 8.0, Craft CMS ^4.0 and Craft Commerce ^4.0 or later.
 
 ## Installation
 
@@ -28,7 +28,7 @@ cd /path/to/my-project.test
 composer require quantity-digital/commerce-quickpay
 
 # tell Craft to install the plugin
-./craft install/plugin commerce-webshipper
+./craft install/plugin commerce-quickpay
 ```
 
 ## Setup
@@ -37,9 +37,14 @@ To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, cr
 
 > **Tip:** The API Key and Private key key settings can be set to environment variables. See [Environmental Configuration](https://docs.craftcms.com/v3/config/environments.html) in the Craft docs for more information.
 
+## Notice
+
+In order to delete payments, the API user in has to have the required permissions.
+
 ## Roadmap
 
 * Autocapture on authorize (Purchase)
 * Capture on status change
 * Translate to aditional languages
 * On manual order, send paymentlink to customer
+* Subscriptions
