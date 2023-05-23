@@ -13,8 +13,10 @@
 			on: (gateway.sendNotfifications is defined) ? gateway.sendNotfifications : 0,
 		}) }}
 
-		<div class="field width-50">
-			{{ autosuggestField({
+	</div>
+
+	<div class="field width-50">
+		{{ autosuggestField({
 			label: "Notifications e-mails"|t('commerce-quickpay'),
 			instructions: 'List of e-mails to receive notifications'|t('commerce-quickpay'),
 			id: 'notificationEmails',
@@ -24,7 +26,5 @@
 			value: gateway.notificationEmails,
 			errors: gateway.getErrors('notificationEmails'),
 		}) }}
-		</div>
 	</div>
 </div>
-<hr>
