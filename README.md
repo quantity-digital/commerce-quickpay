@@ -39,12 +39,11 @@ To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, cr
 
 ## Notice
 
-In order to delete payments, the API user in has to have the required permissions.
+In order to delete payments, the API user in Quickpay has to have the required permissions.
 
 ## Roadmap
 
-* Autocapture on authorize (Purchase)
-* Capture on status change
-* Translate to aditional languages
-* On manual order, send paymentlink to customer
-* Subscriptions
+- Autocapture on authorize (Purchase)
+- Capture on status change
+- Translate to aditional languages
+- On manual order, send paymentlink to customer

@@ -1,0 +1,30 @@
+{% from "_includes/forms" import booleanMenuField, autosuggestField %}
+<h2>Notifications</h2>
+<div class="flex-fields">
+	<div class="field width-50">
+		{{ booleanMenuField({
+			label: "Send notifications"|t,
+			id: 'sendNotfifications',
+			name: 'sendNotfifications',
+			instructions: "If checked, notifications will be sent from the plugin"|t('commerce-quickpay'),
+        	includeEnvVars: true,
+			value: (gateway.sendNotfifications is defined) ? gateway.sendNotfifications : 0,
+			errors: gateway.getErrors('sendNotfifications'),
+			on: (gateway.sendNotfifications is defined) ? gateway.sendNotfifications : 0,
+		}) }}
+
+		<div class="field width-50">
+			{{ autosuggestField({
+			label: "Notifications e-mails"|t('commerce-quickpay'),
+			instructions: 'List of e-mails to receive notifications'|t('commerce-quickpay'),
+			id: 'notificationEmails',
+			class: 'ltr',
+			name: 'notificationEmails',
+			suggestEnvVars: true,
+			value: gateway.notificationEmails,
+			errors: gateway.getErrors('notificationEmails'),
+		}) }}
+		</div>
+	</div>
+</div>
+<hr>

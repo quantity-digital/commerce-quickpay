@@ -40,7 +40,7 @@ class Plugin extends \craft\base\Plugin
 	/**
 	 * @inheritDoc
 	 */
-	public string $schemaVersion = '2.2.2';
+	public string $schemaVersion = '2.2.3';
 	public bool $hasCpSettings = false;
 
 	// Public Methods

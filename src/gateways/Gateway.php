@@ -48,6 +48,8 @@ class Gateway extends BaseGateway
 	public string $autoCaptureStatus = '';
 	public bool $enableAutoStatus = false;
 	public string $afterCaptureStatus = '';
+	public bool $sendNotfifications = '';
+	public string $notificationEmails = '';
 	public array $paymentMethods = [];
 	public bool $enabled3ds = false;
 	public bool $convertAmount = false;
