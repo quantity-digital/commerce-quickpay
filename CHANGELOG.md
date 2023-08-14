@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.1.0 - 2023-06-23
+
+### Added
+
+- Addded support for `Klarna Payments`
+
+### Changed
+
+- Following methods has been disable for specific selection, as gateway currently doesn't support them: PayPal, Sofort, Resurs Bank, Klarna, Swish
+- Payment requests now contain lineitems, adjustments and shipping costs
+- Improved error response from quickpay to the frontend. Closes [#4 - Gateway not redirecting](https://github.com/quantity-digital/commerce-quickpay/issues/4)
+
+## 4.0.3 - 2023-05-25
+
+### Change
+
+- Added property `orderId` to the `CapturePayment` queue. `CapturePayment` will now get a fresh copy of the order from the database.
+
+### Fixed
+
+- Fixed `CapturePayment` e-mail sending fails when using ENV variable
+
+### Depricated
+
+`transaction` in `CapturePayment` is depricated, and is replaced by orderId instead. This is to prevent raceconditions on order.
+
 ## 4.0.1 - 2023-05-23
 
 ### Changed

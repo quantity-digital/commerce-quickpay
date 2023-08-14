@@ -12,13 +12,23 @@ use \craft\Commerce\elements\Order;
 use craft\helpers\App;
 use craft\mail\Message;
 use Exception;
+use QD\commerce\quickpay\Plugin;
 use \yii\queue\Queue;
 use \yii\queue\QueueInterface;
 use yii\queue\RetryableJobInterface;
 
 class CapturePayment extends BaseJob implements RetryableJobInterface
 {
+	/**
+	 * Transction to capture
+	 * @deprecated Deprecated since version 4.0.3. Use $orderId instead.
+	 */
 	public Transaction $transaction;
+
+	/**
+	 * Id of the order to capture
+	 */
+	public string $orderId;
 
 	/**
 	 * Encapsulates the Ttr
@@ -27,16 +37,25 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 	 */
 	public function getTtr(): int
 	{
-		return 60;
+		return 5;
 	}
 
 	public function canRetry($attempt, $error)
 	{
 		if ($attempt == 5) {
 			$message = new Message();
-			$order = $this->transaction->order;
+
+			if ($this->transaction) {
+				$transaction = $this->transaction;
+				$order = Order::find()->id($transaction->orderId)->one();
+			}
+
+			if ($this->orderId) {
+				$order = Order::find()->id($this->orderId)->one();
+			}
+
 			$gateway = $order->getGateway();
-			$notificationEmails = \str_replace(' ', '', $gateway->notificationEmails);
+			$notificationEmails = \str_replace(' ', '', App::parseEnv($gateway->notificationEmails));
 
 			// If no notification mail is set, or notifications are disabled, we throw an exception
 			if (!$notificationEmails || !$gateway->sendNotfifications) {
@@ -69,7 +88,22 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 	 */
 	public function execute($queue): void
 	{
-		$order = $this->transaction->order;
+		if ($this->transaction) {
+			$transaction = $this->transaction;
+			$order = Order::find()->id($transaction->orderId)->one();
+		}
+
+		if ($this->orderId) {
+			$order = Order::find()->id($this->orderId)->one();
+			$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
+		}
+
+		//No successful transaction found
+		if (!$transaction) {
+			throw new Exception('Could not find successfull transaction');
+		}
+
+		//Get gateway
 		$gateway = $order->getGateway();
 
 		//Order is already paid, so we can just update the status
@@ -81,7 +115,7 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 
 		//Order is not paid, so we need to capture the transaction
 		if (!$order->isPaid) {
-			$child = CommercePlugin::getInstance()->getPayments()->captureTransaction($this->transaction);
+			$child = CommercePlugin::getInstance()->getPayments()->captureTransaction($transaction);
 			$order = $child->order;
 			$this->setProgress($queue, .5);
 

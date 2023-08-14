@@ -6,6 +6,7 @@ use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\services\Api;
 use QD\commerce\quickpay\services\Payments;
 use QD\commerce\quickpay\services\Orders;
+use QD\commerce\quickpay\services\Taxes;
 
 trait Services
 {
@@ -21,6 +22,7 @@ trait Services
 			'api'      		=> Api::class,
 			'gateway'  		=> Gateway::class,
 			'orders'  		=> Orders::class,
+			'taxes'  		=> Taxes::class,
 		]);
 	}
 
@@ -54,6 +56,14 @@ trait Services
 	public function getOrders(): Orders
 	{
 		return $this->get('orders');
+	}
+
+	/**
+	 * @return Taxes The Taxes class
+	 */
+	public function getTaxes(): Taxes
+	{
+		return $this->get('taxes');
 	}
 }
 
