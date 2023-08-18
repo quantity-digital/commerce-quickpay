@@ -7,6 +7,7 @@ use craft\commerce\models\Transaction;
 use craft\commerce\services\Gateways;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
+use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\models\PaymentRequestModel;
 use QD\commerce\quickpay\Plugin;
@@ -24,7 +25,7 @@ class Payments extends Component
 
 	/**
 	 * Inits the service
-	 * 
+	 *
 	 * @return void
 	 */
 	public function init(): void
@@ -84,8 +85,8 @@ class Payments extends Component
 
 		//Create payment at quickpay
 		$request = $this->initiatePayment($paymentRequest);
-		$response = new PaymentResponse($request);
 
+		$response = new PaymentResponse($request);
 		//If payment wasn't created return with error message
 		if (!$response->isSuccessful()) {
 			return $response;
@@ -224,5 +225,72 @@ class Payments extends Component
 		}
 
 		return $gateway;
+	}
+
+	public function getBasketPayload(Order $order)
+	{
+		//Start empty lines array
+		$lines = [];
+
+		//Get taxrate for product lineitems
+		$taxrate = Plugin::getInstance()->getTaxes()->getProductTaxRate($order);
+
+		//Loop through all lineitems and add them. We multiply with 100 to convert to cents
+		foreach ($order->getLineItems() as $lineItem) {
+
+			//Convert to cents
+			$amount = ($lineItem->total / $lineItem->qty) * 100;
+
+			//Convert to payment currency
+			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+
+			$lines[] = [
+				'qty' => $lineItem->qty,
+				'item_no' => $lineItem->sku,
+				'item_name' => $lineItem->description,
+				'item_price' => $converted,
+				'vat_rate' => $taxrate
+			];
+		}
+
+		//Loop through all adjustments and add items like discounts and taxes thats not included in the lineitems
+		foreach ($order->adjustments as $adjustment) {
+
+			//If included in the price or shipping (as its added in the shippingPayload), skip
+			if ($adjustment->included || $adjustment->type == 'shipping') {
+				continue;
+			}
+
+			//Convert to cents
+			$amount = $adjustment->amount * 100;
+
+			//Convert to payment currency
+			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+
+			$lines[] = [
+				'qty' => 1,
+				'item_no' => $adjustment->id,
+				'item_name' => $adjustment->name,
+				'item_price' => $$converted,
+				'vat_rate' => $taxrate
+			];
+		}
+
+		return $lines;
+	}
+
+	public function getShippingPayload(Order $order)
+	{
+		$taxrate = Plugin::getInstance()->getTaxes()->getShippingTaxRate($order);
+		//Convert to cents
+		$amount = $order->totalShippingCost * 100;
+
+		//Convert to payment currency
+		$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+
+		return [
+			'amount' => $converted,
+			'vat_rate' => $taxrate
+		];
 	}
 }

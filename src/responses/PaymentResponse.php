@@ -11,19 +11,12 @@ class PaymentResponse implements RequestResponseInterface
 	 * @var
 	 */
 	protected mixed $data = [];
+	public mixed $errors = [];
+	public string $message = '';
 
-	/**
-	 * @var string
-	 */
 	private string $_redirect = '';
-
-	/**
-	 * @var bool
-	 */
 	private bool $_processing = false;
-
-	private string $_error = '';
-	private int $_code = 200;
+	public int $_code = 200;
 
 	/**
 	 * Response constructor.
@@ -35,14 +28,14 @@ class PaymentResponse implements RequestResponseInterface
 		$this->data = $data;
 
 		$statusCode = $this->data->error_code ?? null;
-		$message    = $this->data->message ?? null;
+		$this->message  = $this->data->message ?? '';
 
 		if ($statusCode) {
 			$this->_code = $statusCode;
 		}
 
-		if ($statusCode && $statusCode > 299) {
-			$this->_error = $message;
+		if(isset($data->errors)){
+			$this->errors = json_decode(json_encode ( $data->errors ) , true);
 		}
 	}
 
@@ -79,11 +72,11 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function isSuccessful(): bool
 	{
-		if ($this->isRedirect()) {
+		if($this->errors){
 			return false;
 		}
 
-		return !$this->_error;
+		return true;
 	}
 
 	/**
@@ -170,7 +163,7 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function getMessage(): string
 	{
-		return $this->_error ?? '';
+		return $this->message ?? '';
 	}
 
 	/**
@@ -182,5 +175,4 @@ class PaymentResponse implements RequestResponseInterface
 	{
 		Craft::$app->getResponse()->redirect($this->_redirect)->send();
 	}
-
 }

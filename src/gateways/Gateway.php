@@ -100,14 +100,14 @@ class Gateway extends BaseGateway
 			'mastercard-debet' => 'Mastercard debet card',
 			'visa' => 'Visa credit card',
 			'visa-electron' => 'Visa debet (former Visa Electron) card',
-			'paypal' => 'PayPal',
-			'sofort' => 'Sofort',
+			// 'paypal' => 'PayPal',
+			// 'sofort' => 'Sofort',
 			'viabill' => 'ViaBill',
-			'resurs' => 'Resurs Bank',
+			// 'resurs' => 'Resurs Bank',
 			'klarna-payments' => 'Klarna Payments',
-			'klarna' => 'Klarna',
+			// 'klarna' => 'Klarna',
 			'bitcoin' => 'Bitcoin through Coinify',
-			'swish' => 'Swish',
+			// 'swish' => 'Swish',
 			'trustly' => 'Trustly',
 			'ideal' => 'iDEAL',
 			'vipps' => 'Vipps',
@@ -138,8 +138,16 @@ class Gateway extends BaseGateway
 	{
 		//TODO : Implement paymentlink to be sent to customer for manual orders
 		$response = Plugin::$plugin->getPayments()->intiatePaymentFromGateway($transaction);
+
+		//If no response, throw error
 		if (!$response) {
-			throw new ServiceUnavailableHttpException(Craft::t('commerce', 'An error occured when communicatiing with Quickpay. Please try again.'));
+			$form->addErrors(['Failed to communicate with Quickpay']);
+			throw new ServiceUnavailableHttpException('Failed to communicate with Quickpay. Please try again.');
+		}
+
+		if (!$response->isSuccessful()) {
+			$form->addErrors($response->errors);
+			throw new ServiceUnavailableHttpException($response->message, $response->_code);
 		}
 
 		return $response;

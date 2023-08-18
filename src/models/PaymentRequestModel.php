@@ -9,6 +9,7 @@ use craft\commerce\elements\Order;
 use craft\commerce\helpers\Currency;
 use craft\helpers\UrlHelper;
 use craft\commerce\Plugin as CommercePlugin;
+use QD\commerce\quickpay\Plugin;
 use Throwable;
 
 /**
@@ -62,7 +63,6 @@ class PaymentRequestModel extends Model
 			}
 		}
 
-
 		if ($count = count($this->order->transactions)) {
 			$orderId = $orderId . '-' . $count;
 		}
@@ -75,8 +75,11 @@ class PaymentRequestModel extends Model
 
 		$payload = [
 			'order_id' => $orderId,
-			'currency' => $currency
+			'currency' => $currency,
+			'basket' => Plugin::getInstance()->getPayments()->getBasketPayload($this->order),
+			'shipping' => Plugin::getInstance()->getPayments()->getShippingPayload($this->order),
 		];
+
 		return $payload;
 	}
 
