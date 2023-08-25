@@ -116,11 +116,17 @@ class Payments extends Component
 	 */
 	public function captureFromGateway(Transaction $transaction): CaptureResponse
 	{
-		$order                = $transaction->getOrder();
+		$order = $transaction->getOrder();
+		$gateway = $this->transaction->getGateway();
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
-		$authorizedAmount     = (float)$transaction->amount;
-		$amount               = $order->getOutstandingBalance();
+		$authorizedAmount     = (float)$transaction->paymentAmount;
 
+		// Convert amount
+		$currency = new Currency;
+		$amount = $currency->formatAsCurrency($order->getOutstandingBalance(), $order->paymentCurrency, $gateway->convertAmount, false, true);
+
+
+		// Set gateway for API
 		$this->api->setGateway($order->getGateway());
 
 		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
@@ -149,13 +155,16 @@ class Payments extends Component
 	 */
 	public function refundFromGateway(Transaction $transaction): RefundResponse
 	{
-		$order                = $transaction->getOrder();
-		$this->api->setGateway($order->getGateway());
+		$order = $transaction->getOrder();
+		$gateway = $order->getGateway();
+		$this->api->setGateway($gateway);
 
 		//multiplied by 100 because industry standard is to save the amount in "cents"
-		$amount     = (float)$transaction->amount * 100;
+		$currency = new Currency;
+		$amount     = $transaction->paymentAmount;
+
 		$response = $this->api->post("/payments/{$transaction->reference}/refund", [
-			'amount' => $amount
+			'amount' => $amount * 100
 		]);
 
 		return new RefundResponse($response);
@@ -235,6 +244,9 @@ class Payments extends Component
 		//Get taxrate for product lineitems
 		$taxrate = Plugin::getInstance()->getTaxes()->getProductTaxRate($order);
 
+		//Get gateway
+		$gateway = $order->getGateway();
+
 		//Loop through all lineitems and add them. We multiply with 100 to convert to cents
 		foreach ($order->getLineItems() as $lineItem) {
 
@@ -242,7 +254,7 @@ class Payments extends Component
 			$amount = ($lineItem->total / $lineItem->qty) * 100;
 
 			//Convert to payment currency
-			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
 
 			$lines[] = [
 				'qty' => $lineItem->qty,
@@ -265,7 +277,7 @@ class Payments extends Component
 			$amount = $adjustment->amount * 100;
 
 			//Convert to payment currency
-			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
 
 			$lines[] = [
 				'qty' => 1,
@@ -281,12 +293,17 @@ class Payments extends Component
 
 	public function getShippingPayload(Order $order)
 	{
+		//Get gateway
+		$gateway = $order->getGateway();
+
+		//Get taxrate
 		$taxrate = Plugin::getInstance()->getTaxes()->getShippingTaxRate($order);
+
 		//Convert to cents
 		$amount = $order->totalShippingCost * 100;
 
 		//Convert to payment currency
-		$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, true, false, true);
+		$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
 
 		return [
 			'amount' => $converted,
