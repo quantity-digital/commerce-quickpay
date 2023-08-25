@@ -1,9 +1,8 @@
 {% from "_includes/forms" import multiSelectField, booleanMenuField %}
 <h2>Payment settings</h2>
-<div
-	class="flex-fields">
-	{# <div class="field width-50"> #}
-	{{ multiSelectField({
+<div class="flex-fields">
+	<div class="field width-50">
+		{{ multiSelectField({
 			label: 'Paymentmethods'|t('commerce-quickpay'),
 			instructions: 'What payment methods should this gateway allow? If none is selected all payment methods activated on your quickpay account will be available to the customer'|t('commerce-quickpay'),
 			id: 'paymentMethods',
@@ -12,21 +11,34 @@
 			values: gateway.paymentMethods,
 			class: 'selectize fullwidth',
 		}) }}
-	{# </div> #}
+	</div>
+
+	<div class="field width-50">
+		{{ booleanMenuField({
+			label: "Should order total be converted to payment currency"|t,
+			id: 'convertAmount',
+			name: 'convertAmount',
+			instructions: "If checked, payment amounts will be converted into payment currency based on the conversionrate"|t('commerce-quickpay'),
+        	includeEnvVars: true,
+			value: (gateway.convertAmount is defined) ? gateway.convertAmount : 0,
+			errors: gateway.getErrors('convertAmount'),
+			on: (gateway.convertAmount is defined) ? gateway.convertAmount : 0,
+		}) }}
+	</div>
 
 	<!- TODO: Implement 3D-secure ->
 	{# <div class="field width-50">
-				{{ booleanMenuField({
-					label: "Enable 3D-Secure on payment methods that alow it"|t,
-					id: 'enabled3ds',
-					name: 'enabled3ds',
-					instructions: "If checked, all eligble payment methods 3D-secure will get it enabled. To see full list visit https://learn.quickpay.net/tech-talk/appendixes/payment-methods/#payment-methods"|t('commerce-quickpay'),
-					value: 1,
-		        	includeEnvVars: true,
-					errors: gateway.getErrors('enabled3ds'),
-					on: (gateway.enabled3ds is defined) ? gateway.enabled3ds : 0,
-				}) }}
-			</div> #}
+							{{ booleanMenuField({
+								label: "Enable 3D-Secure on payment methods that alow it"|t,
+								id: 'enabled3ds',
+								name: 'enabled3ds',
+								instructions: "If checked, all eligble payment methods 3D-secure will get it enabled. To see full list visit https://learn.quickpay.net/tech-talk/appendixes/payment-methods/#payment-methods"|t('commerce-quickpay'),
+								value: 1,
+					        	includeEnvVars: true,
+								errors: gateway.getErrors('enabled3ds'),
+								on: (gateway.enabled3ds is defined) ? gateway.enabled3ds : 0,
+							}) }}
+						</div> #}
 </div>
 
 <hr>
