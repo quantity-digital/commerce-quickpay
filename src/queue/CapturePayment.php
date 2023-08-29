@@ -72,9 +72,6 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 			} catch (\Throwable $e) {
 				Craft::warning("Something went wrong: {$e->getMessage()}", __METHOD__);
 			}
-
-			// Throw an exception to retry the job later
-			throw new Exception($error, 503);
 		}
 
 		return ($attempt < 5);

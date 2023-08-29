@@ -34,8 +34,8 @@ class PaymentResponse implements RequestResponseInterface
 			$this->_code = $statusCode;
 		}
 
-		if(isset($data->errors)){
-			$this->errors = json_decode(json_encode ( $data->errors ) , true);
+		if (isset($data->errors)) {
+			$this->errors = json_decode(json_encode($data->errors), true);
 		}
 	}
 
@@ -72,11 +72,25 @@ class PaymentResponse implements RequestResponseInterface
 	 */
 	public function isSuccessful(): bool
 	{
-		if($this->errors){
+		if ($this->isRedirect()) {
+			return false;
+		}
+
+		if ($this->errors) {
 			return false;
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns whether or not the payment has errors.
+	 *
+	 * @return boolean
+	 */
+	public function hasErrors(): bool
+	{
+		return !empty($this->errors);
 	}
 
 	/**

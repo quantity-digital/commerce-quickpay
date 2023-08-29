@@ -145,7 +145,8 @@ class Gateway extends BaseGateway
 			throw new ServiceUnavailableHttpException('Failed to communicate with Quickpay. Please try again.');
 		}
 
-		if (!$response->isSuccessful()) {
+		//If response is not successful, and we don't have a redirect, throw error
+		if ($response->hasErrors()) {
 			$form->addErrors($response->errors);
 			throw new ServiceUnavailableHttpException($response->message, $response->_code);
 		}
