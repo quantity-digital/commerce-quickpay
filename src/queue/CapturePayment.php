@@ -23,12 +23,12 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 	 * Transction to capture
 	 * @deprecated Deprecated since version 4.0.3. Use $orderId instead.
 	 */
-	public Transaction $transaction;
+	public $transaction;
 
 	/**
 	 * Id of the order to capture
 	 */
-	public string $orderId;
+	public $orderId;
 
 	/**
 	 * Encapsulates the Ttr
