@@ -117,7 +117,7 @@ class Payments extends Component
 	public function captureFromGateway(Transaction $transaction): CaptureResponse
 	{
 		$order = $transaction->getOrder();
-		$gateway = $this->transaction->getGateway();
+		$gateway = $transaction->getGateway();
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
 		$authorizedAmount     = (float)$transaction->paymentAmount;
 
