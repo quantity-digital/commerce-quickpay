@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Added new gateway setting, to define if amounts sent to quickpay should be converted into paymentcurrency. Is default set to `false`
 
+## 4.1.1 - 2023-08-25
+### Added
+- Added new gateway setting, to define if amounts sent to quickpay should be converted into paymentcurrency. Is default set to `false`
+
 ## 4.1.0 - 2023-06-23
 
 ### Added
