@@ -283,7 +283,7 @@ class Payments extends Component
 				'qty' => 1,
 				'item_no' => $adjustment->id,
 				'item_name' => $adjustment->name,
-				'item_price' => $$converted,
+				'item_price' => $converted,
 				'vat_rate' => $taxrate
 			];
 		}
