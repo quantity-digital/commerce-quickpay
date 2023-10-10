@@ -122,7 +122,7 @@ class Payments extends Component
 		$authorizedAmount     = (float)$transaction->paymentAmount;
 
 		// Convert amount
-		$amount = $order->getOutstandingBalance()  * $transaction->paymentRate;
+		$amount = $transaction->paymentAmount;
 
 		// Set gateway for API
 		$this->api->setGateway($order->getGateway());
@@ -158,7 +158,6 @@ class Payments extends Component
 		$this->api->setGateway($gateway);
 
 		//multiplied by 100 because industry standard is to save the amount in "cents"
-		$currency = new Currency;
 		$amount     = $transaction->paymentAmount;
 
 		$response = $this->api->post("/payments/{$transaction->reference}/refund", [
