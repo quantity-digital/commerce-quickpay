@@ -122,9 +122,7 @@ class Payments extends Component
 		$authorizedAmount     = (float)$transaction->paymentAmount;
 
 		// Convert amount
-		$currency = new Currency;
-		$amount = $currency->formatAsCurrency($order->getOutstandingBalance(), $order->paymentCurrency, $gateway->convertAmount, false, true);
-
+		$amount = $order->getOutstandingBalance()  * $transaction->paymentRate;
 
 		// Set gateway for API
 		$this->api->setGateway($order->getGateway());

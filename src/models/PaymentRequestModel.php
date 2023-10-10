@@ -94,9 +94,8 @@ class PaymentRequestModel extends Model
 		$gateway = $this->transaction->getGateway();
 
 		// Settings
-		$currency = new Currency;
-		$storedTotal = $currency->formatAsCurrency($this->order->storedTotalPrice, $this->order->paymentCurrency, $gateway->convertAmount, false, true);
-		$cents = $storedTotal * 100;
+		$paymentAmount = $this->transaction->paymentAmount;
+		$cents = $paymentAmount * 100;
 
 		$payload = [
 			'language'     => Craft::$app->getLocale()->getLanguageID(),
