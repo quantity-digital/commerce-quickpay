@@ -121,7 +121,7 @@ class Payments extends Component
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
 		$authorizedAmount     = (float)$transaction->paymentAmount;
 
-		// Convert amount
+		// Get the amount to capture
 		$amount = $transaction->paymentAmount;
 
 		// Set gateway for API
@@ -157,7 +157,7 @@ class Payments extends Component
 		$gateway = $order->getGateway();
 		$this->api->setGateway($gateway);
 
-		//multiplied by 100 because industry standard is to save the amount in "cents"
+		// Get the amount to refund
 		$amount     = $transaction->paymentAmount;
 
 		$response = $this->api->post("/payments/{$transaction->reference}/refund", [
@@ -179,7 +179,6 @@ class Payments extends Component
 
 		$this->api->setGateway($order->getGateway());
 
-		//TODO: shouldn't this be returned?
 		$response = $this->api->delete("/payments/{$authTransaction->reference}/link");
 
 		$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order, $authTransaction);
