@@ -58,7 +58,7 @@ class PaymentRequestModel extends Model
 				Craft::$app->getElements()->saveElement($this->order, false);
 				$this->order->setRecalculationMode($originalRecalculationMode);
 			} catch (Throwable $exception) {
-				Craft::error('Unable to generate order completion reference for order ID: ' . $this->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
+				Craft::error('Unable to generate order completion reference for order ID: ' . $this->order->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
 				throw $exception;
 			}
 		}
