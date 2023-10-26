@@ -237,7 +237,13 @@ class Payments extends Component
 		return $gateway;
 	}
 
-	public function getBasketPayload(Order $order)
+	/**
+	 * Get the quickpay basket payload
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getBasketPayload(Order $order): array
 	{
 		// Get the payment methods enabled in Quickpay gateway
 		$methods = $order->getGateway()->paymentMethods;
@@ -251,7 +257,13 @@ class Payments extends Component
 		return $this->_getDefaultBasketPayload($order);
 	}
 
-	private function _getDefaultBasketPayload(Order $order)
+	/**
+	 * Get the basket payload including negative adjustments (Discounts)
+	 * 
+	 * @param Order $order
+	 * @return array
+	 */
+	private function _getDefaultBasketPayload(Order $order): array
 	{
 		//Start empty lines array
 		$lines = [];
@@ -262,6 +274,7 @@ class Payments extends Component
 		//Get gateway
 		$gateway = $order->getGateway();
 
+		//* Lineitems
 		//Loop through all lineitems and add them. We multiply with 100 to convert to cents
 		foreach ($order->getLineItems() as $lineItem) {
 
@@ -288,6 +301,7 @@ class Payments extends Component
 			];
 		}
 
+		//* Adjustments
 		//Loop through all adjustments and add items like discounts and taxes thats not included in the lineitems
 		foreach ($order->adjustments as $adjustment) {
 
@@ -317,7 +331,13 @@ class Payments extends Component
 		return $lines;
 	}
 
-	private function _getKlarnaBasketPayload(Order $order)
+	/**
+	 * Get the basket payload required for klarna to work
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	private function _getKlarnaBasketPayload(Order $order): array
 	{
 		$lines = [];
 		$adjustments = [];
@@ -403,7 +423,13 @@ class Payments extends Component
 		return array_merge($lines, $adjustments);
 	}
 
-	public function getShippingPayload(Order $order)
+	/**
+	 * Get the payload for the selected shipping method
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getShippingPayload(Order $order): array
 	{
 		//Get gateway
 		$gateway = $order->getGateway();
