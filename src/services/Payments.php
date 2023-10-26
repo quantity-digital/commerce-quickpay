@@ -16,6 +16,7 @@ use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
+use QD\commerce\quickpay\events\ShippingTotal;
 use QD\commerce\quickpay\responses\RefundResponse;
 use stdClass;
 use yii\base\Exception;
@@ -25,6 +26,7 @@ class Payments extends Component
 
 	const EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT = 'beforeBasketAdjustmentAmount';
 	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
+	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
 
 	public Api $api;
 
@@ -437,14 +439,17 @@ class Payments extends Component
 		//Get taxrate
 		$taxrate = Plugin::getInstance()->getTaxes()->getShippingTaxRate($order);
 
-		//Convert to cents
-		$amount = $order->totalShippingCost * 100;
+		$event = new ShippingTotal([
+			'order' => $order,
+			'total' => Currency::formatAsCurrency($order->totalShippingCost, $order->paymentCurrency, $gateway->convertAmount, false, true),
 
-		//Convert to payment currency
-		$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
+		]);
+		$this->trigger(self::EVENT_BEFORE_SHIPPING_TOTAL, $event);
+		$amount = $event->total;
+
 
 		return [
-			'amount' => $converted,
+			'amount' => $amount * 100,
 			'vat_rate' => $taxrate
 		];
 	}
