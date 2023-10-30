@@ -14,12 +14,21 @@ use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\CaptureResponse;
 use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
+use QD\commerce\quickpay\events\BasketAdjustmentAmount;
+use QD\commerce\quickpay\events\BasketLineTotal;
+use QD\commerce\quickpay\events\BasketSave;
+use QD\commerce\quickpay\events\ShippingTotal;
 use QD\commerce\quickpay\responses\RefundResponse;
 use stdClass;
 use yii\base\Exception;
 
 class Payments extends Component
 {
+
+	const EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT = 'beforeBasketAdjustmentAmount';
+	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
+	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
+	const EVENT_BEFORE_BASKET_SAVE = 'beforeBasketSave';
 
 	public Api $api;
 
@@ -232,7 +241,33 @@ class Payments extends Component
 		return $gateway;
 	}
 
-	public function getBasketPayload(Order $order)
+	/**
+	 * Get the quickpay basket payload
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getBasketPayload(Order $order): array
+	{
+		// Get the payment methods enabled in Quickpay gateway
+		$methods = $order->getGateway()->paymentMethods;
+
+		// If methods array is empty or contains klarna-payments
+		//? If empty all available payments methods are enabled, therefore we need to assume that klarna is a possible payment method
+		if (!$methods || in_array('klarna-payments', $methods)) {
+			return $this->_getKlarnaBasketPayload($order);
+		}
+
+		return $this->_getDefaultBasketPayload($order);
+	}
+
+	/**
+	 * Get the basket payload including negative adjustments (Discounts)
+	 * 
+	 * @param Order $order
+	 * @return array
+	 */
+	private function _getDefaultBasketPayload(Order $order): array
 	{
 		//Start empty lines array
 		$lines = [];
@@ -243,24 +278,35 @@ class Payments extends Component
 		//Get gateway
 		$gateway = $order->getGateway();
 
+		//* Lineitems
 		//Loop through all lineitems and add them. We multiply with 100 to convert to cents
 		foreach ($order->getLineItems() as $lineItem) {
 
-			//Convert to cents
-			$amount = ($lineItem->total / $lineItem->qty) * 100;
+			$event = new BasketLineTotal([
+				'order' => $order,
+				'lineItem' => $lineItem,
+				'total' => Currency::formatAsCurrency($lineItem->total, $order->paymentCurrency, $gateway->convertAmount, false, true),
 
-			//Convert to payment currency
-			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
+			]);
+			$this->trigger(self::EVENT_BEFORE_BASKET_LINE_TOTAL, $event);
+
+			// Get total amount
+			$lineItemTotal = $event->total;
+
+			// Get the unit price
+			//? Quickpay expects to get the unit price, as they add up themselves
+			$lineItemUnitPrice = $lineItemTotal / $lineItem->qty;
 
 			$lines[] = [
 				'qty' => $lineItem->qty,
 				'item_no' => $lineItem->sku,
 				'item_name' => $lineItem->description,
-				'item_price' => $converted,
+				'item_price' => (int) $lineItemUnitPrice * 100,
 				'vat_rate' => $taxrate
 			];
 		}
 
+		//* Adjustments
 		//Loop through all adjustments and add items like discounts and taxes thats not included in the lineitems
 		foreach ($order->adjustments as $adjustment) {
 
@@ -269,17 +315,20 @@ class Payments extends Component
 				continue;
 			}
 
-			//Convert to cents
-			$amount = $adjustment->amount * 100;
+			$event = new BasketAdjustmentAmount([
+				'order' => $order,
+				'adjustment' => $adjustment,
+				'amount' => Currency::formatAsCurrency($adjustment->amount, $order->paymentCurrency, $gateway->convertAmount, false, true),
 
-			//Convert to payment currency
-			$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
+			]);
+			$this->trigger(self::EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT, $event);
+			$adjustmentAmount = $event->amount;
 
 			$lines[] = [
 				'qty' => 1,
 				'item_no' => $adjustment->id,
 				'item_name' => $adjustment->name,
-				'item_price' => $converted,
+				'item_price' => (int) $adjustmentAmount * 100,
 				'vat_rate' => $taxrate
 			];
 		}
@@ -287,7 +336,108 @@ class Payments extends Component
 		return $lines;
 	}
 
-	public function getShippingPayload(Order $order)
+	/**
+	 * Get the basket payload required for klarna to work
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	private function _getKlarnaBasketPayload(Order $order): array
+	{
+		$lines = [];
+		$adjustments = [];
+		$taxrate = Plugin::getInstance()->getTaxes()->getProductTaxRate($order);
+		$gateway = $order->getGateway();
+
+		// The total value of negative adjustments that should be subtracted from the line items
+		//? Klarna cannot deal with negative adjustment values, therefor we need to subtract the value from the lineitems
+		$subtract = 0;
+
+
+		//* Adjustments
+		foreach ($order->adjustments as $adjustment) {
+			// If adjustment is included, or shipping, skip
+			//? Included adjustments are already included in the line items
+			//? Shipping is added in the shipping payload
+			if ($adjustment->included || $adjustment->type == 'shipping') {
+				continue;
+			}
+
+			$event = new BasketAdjustmentAmount([
+				'order' => $order,
+				'adjustment' => $adjustment,
+				'amount' => Currency::formatAsCurrency($adjustment->amount, $order->paymentCurrency, $gateway->convertAmount, false, true),
+
+			]);
+			$this->trigger(self::EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT, $event);
+			$adjustmentAmount = $event->amount;
+
+			// If adjustment is negative, add up
+			//? Klarna cannot handle negative values, therefore we need to subtract all negative values from the lineitems
+			if ($adjustmentAmount < 0) {
+				$subtract = abs($subtract) + abs($adjustmentAmount);
+				continue;
+			}
+
+			// Add to adjustments array
+			$adjustments[] = [
+				'qty' => 1,
+				'item_no' => $adjustment->id,
+				'item_name' => $adjustment->name,
+				'item_price' => (int) $adjustmentAmount * 100,
+				'vat_rate' => $taxrate
+			];
+		}
+
+		//* Lineitems
+		foreach ($order->getLineItems() as $lineItem) {
+
+			$event = new BasketLineTotal([
+				'order' => $order,
+				'lineItem' => $lineItem,
+				'total' => Currency::formatAsCurrency($lineItem->total, $order->paymentCurrency, $gateway->convertAmount, false, true),
+
+			]);
+			$this->trigger(self::EVENT_BEFORE_BASKET_LINE_TOTAL, $event);
+			$lineItemTotal = $event->total;
+
+			// Subtract negative values from lineitems
+			//? We will subtract as much as posible from each item, not going below 0
+			['newItemAmount' => $lineItemTotal, 'amountLeftToSubtract' => $subtract] = $this->_subtractAdjustmentAmount($lineItemTotal, $subtract);
+
+			// Get the unit price
+			//? Quickpay expects to get the unit price, as they add up themselves
+			$lineItemUnitPrice = $lineItemTotal / $lineItem->qty;
+
+			// Format line item
+			$lines[] = [
+				'qty' => $lineItem->qty,
+				'item_no' => $lineItem->sku,
+				'item_name' => $lineItem->description,
+				'item_price' => (int) $lineItemUnitPrice * 100,
+				'vat_rate' => $taxrate
+			];
+		}
+
+		// Event to handle any additional adjustments before save
+		$event = new BasketSave([
+			'order' => $order,
+			'basket' => array_merge($lines, $adjustments),
+			'shipping' => $this->getShippingPayload($order)
+
+		]);
+		$this->trigger(self::EVENT_BEFORE_BASKET_SAVE, $event);
+
+		return $event->basket;
+	}
+
+	/**
+	 * Get the payload for the selected shipping method
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getShippingPayload(Order $order): array
 	{
 		//Get gateway
 		$gateway = $order->getGateway();
@@ -295,15 +445,50 @@ class Payments extends Component
 		//Get taxrate
 		$taxrate = Plugin::getInstance()->getTaxes()->getShippingTaxRate($order);
 
-		//Convert to cents
-		$amount = $order->totalShippingCost * 100;
+		$event = new ShippingTotal([
+			'order' => $order,
+			'total' => Currency::formatAsCurrency($order->totalShippingCost, $order->paymentCurrency, $gateway->convertAmount, false, true),
 
-		//Convert to payment currency
-		$converted = Currency::formatAsCurrency($amount, $order->paymentCurrency, $gateway->convertAmount, false, true);
+		]);
+		$this->trigger(self::EVENT_BEFORE_SHIPPING_TOTAL, $event);
+		$amount = $event->total;
+
 
 		return [
-			'amount' => $converted,
+			'amount' => $amount * 100,
 			'vat_rate' => $taxrate
 		];
+	}
+
+	/**
+	 * Function to handle subtracting negative adjustment amounts from line items, not going below 0
+	 *
+	 * @param float $itemAmount
+	 * @param float $amountToSubtract
+	 * @return array
+	 */
+	private function _subtractAdjustmentAmount(float $itemAmount, float $amountToSubtract): array
+	{
+		if ($amountToSubtract <= 0) {
+			// We don't need to subtract a negative amount
+			return [
+				'newItemAmount' => $itemAmount,
+				'amountLeftToSubtract' => $amountToSubtract,
+			];
+		}
+
+		if ($itemAmount >= $amountToSubtract) {
+			// If the line item can contain the full adjustment, apply in full and set adjustment to 0
+			return [
+				'newItemAmount' => $itemAmount - $amountToSubtract,
+				'amountLeftToSubtract' => (float)0,
+			];
+		} else {
+			// If the line item can't contain the full adjustment, apply until 0, and return the remaining amount to subtract
+			return [
+				'newItemAmount' => (float)0,
+				'amountLeftToSubtract' => $amountToSubtract - $itemAmount,
+			];
+		}
 	}
 }
