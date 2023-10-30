@@ -16,6 +16,7 @@ use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
+use QD\commerce\quickpay\events\BasketSave;
 use QD\commerce\quickpay\events\ShippingTotal;
 use QD\commerce\quickpay\responses\RefundResponse;
 use stdClass;
@@ -27,6 +28,7 @@ class Payments extends Component
 	const EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT = 'beforeBasketAdjustmentAmount';
 	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
 	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
+	const EVENT_BEFORE_BASKET_SAVE = 'beforeBasketSave';
 
 	public Api $api;
 
@@ -289,16 +291,17 @@ class Payments extends Component
 			$this->trigger(self::EVENT_BEFORE_BASKET_LINE_TOTAL, $event);
 
 			// Get total amount
-			$amount = $event->total;
+			$lineItemTotal = $event->total;
 
 			// Get the unit price
-			$unit = $amount / $lineItem->qty;
+			//? Quickpay expects to get the unit price, as they add up themselves
+			$lineItemUnitPrice = $lineItemTotal / $lineItem->qty;
 
 			$lines[] = [
 				'qty' => $lineItem->qty,
 				'item_no' => $lineItem->sku,
 				'item_name' => $lineItem->description,
-				'item_price' => $unit * 100,
+				'item_price' => (int) $lineItemUnitPrice * 100,
 				'vat_rate' => $taxrate
 			];
 		}
@@ -319,13 +322,13 @@ class Payments extends Component
 
 			]);
 			$this->trigger(self::EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT, $event);
-			$amount = $event->amount;
+			$adjustmentAmount = $event->amount;
 
 			$lines[] = [
 				'qty' => 1,
 				'item_no' => $adjustment->id,
 				'item_name' => $adjustment->name,
-				'item_price' => $amount * 100,
+				'item_price' => (int) $adjustmentAmount * 100,
 				'vat_rate' => $taxrate
 			];
 		}
@@ -344,8 +347,11 @@ class Payments extends Component
 		$lines = [];
 		$adjustments = [];
 		$taxrate = Plugin::getInstance()->getTaxes()->getProductTaxRate($order);
-		$subtract = 0;
 		$gateway = $order->getGateway();
+
+		// The total value of negative adjustments that should be subtracted from the line items
+		//? Klarna cannot deal with negative adjustment values, therefor we need to subtract the value from the lineitems
+		$subtract = 0;
 
 
 		//* Adjustments
@@ -364,12 +370,12 @@ class Payments extends Component
 
 			]);
 			$this->trigger(self::EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT, $event);
-			$amount = $event->amount;
+			$adjustmentAmount = $event->amount;
 
 			// If adjustment is negative, add up
 			//? Klarna cannot handle negative values, therefore we need to subtract all negative values from the lineitems
-			if ($adjustment->amount < 0) {
-				$subtract = abs($subtract) + abs($amount);
+			if ($adjustmentAmount < 0) {
+				$subtract = abs($subtract) + abs($adjustmentAmount);
 				continue;
 			}
 
@@ -378,7 +384,7 @@ class Payments extends Component
 				'qty' => 1,
 				'item_no' => $adjustment->id,
 				'item_name' => $adjustment->name,
-				'item_price' => $amount * 100,
+				'item_price' => (int) $adjustmentAmount * 100,
 				'vat_rate' => $taxrate
 			];
 		}
@@ -393,36 +399,36 @@ class Payments extends Component
 
 			]);
 			$this->trigger(self::EVENT_BEFORE_BASKET_LINE_TOTAL, $event);
-			$amount = $event->total;
+			$lineItemTotal = $event->total;
 
 			// Subtract negative values from lineitems
 			//? We will subtract as much as posible from each item, not going below 0
-			if ($subtract > 0) {
-				if ($amount >= $subtract) {
-					$amount = $amount - $subtract;
-					$subtract = 0;
-				} else {
-					$subtract -= $amount;
-					$amount = 0;
-				}
-			}
+			['newItemAmount' => $lineItemTotal, 'amountLeftToSubtract' => $subtract] = $this->_subtractAdjustmentAmount($lineItemTotal, $subtract);
 
 			// Get the unit price
-			$unit = $amount / $lineItem->qty;
+			//? Quickpay expects to get the unit price, as they add up themselves
+			$lineItemUnitPrice = $lineItemTotal / $lineItem->qty;
 
 			// Format line item
 			$lines[] = [
 				'qty' => $lineItem->qty,
 				'item_no' => $lineItem->sku,
 				'item_name' => $lineItem->description,
-				'item_price' => $unit * 100,
+				'item_price' => (int) $lineItemUnitPrice * 100,
 				'vat_rate' => $taxrate
 			];
 		}
 
-		// Merge lines and adjustments
-		//? We want the adjustments to be added after the line items
-		return array_merge($lines, $adjustments);
+		// Event to handle any additional adjustments before save
+		$event = new BasketSave([
+			'order' => $order,
+			'basket' => array_merge($lines, $adjustments),
+			'shipping' => $this->getShippingPayload($order)
+
+		]);
+		$this->trigger(self::EVENT_BEFORE_BASKET_SAVE, $event);
+
+		return $event->basket;
 	}
 
 	/**
@@ -452,5 +458,37 @@ class Payments extends Component
 			'amount' => $amount * 100,
 			'vat_rate' => $taxrate
 		];
+	}
+
+	/**
+	 * Function to handle subtracting negative adjustment amounts from line items, not going below 0
+	 *
+	 * @param float $itemAmount
+	 * @param float $amountToSubtract
+	 * @return array
+	 */
+	private function _subtractAdjustmentAmount(float $itemAmount, float $amountToSubtract): array
+	{
+		if ($amountToSubtract <= 0) {
+			// We don't need to subtract a negative amount
+			return [
+				'newItemAmount' => $itemAmount,
+				'amountLeftToSubtract' => $amountToSubtract,
+			];
+		}
+
+		if ($itemAmount >= $amountToSubtract) {
+			// If the line item can contain the full adjustment, apply in full and set adjustment to 0
+			return [
+				'newItemAmount' => $itemAmount - $amountToSubtract,
+				'amountLeftToSubtract' => (float)0,
+			];
+		} else {
+			// If the line item can't contain the full adjustment, apply until 0, and return the remaining amount to subtract
+			return [
+				'newItemAmount' => (float)0,
+				'amountLeftToSubtract' => $amountToSubtract - $itemAmount,
+			];
+		}
 	}
 }
