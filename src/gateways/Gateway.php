@@ -111,7 +111,10 @@ class Gateway extends BaseGateway
 			'trustly' => 'Trustly',
 			'ideal' => 'iDEAL',
 			'vipps' => 'Vipps',
-			'paysafecard' => 'Paysafecard'
+			'paysafecard' => 'Paysafecard',
+			'anyday-split' => 'Anyday Split',
+			'apple-pay' => 'Apple Pay',
+			'google-pay' => 'Google Pay',
 		];
 
 		return Craft::$app->getView()->renderTemplate('commerce-quickpay/gateways/payments', ['gateway' => $this, 'statusOptions' => $statusOptions, 'paymentMethods' => $paymentMethods]);
