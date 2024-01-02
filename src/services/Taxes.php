@@ -2,14 +2,8 @@
 
 namespace QD\commerce\quickpay\services;
 
-use Craft;
-use craft\helpers\App;
 use craft\base\Component;
 use craft\commerce\elements\Order;
-use craft\commerce\models\Transaction;
-use craft\commerce\Plugin as CommercePlugin;
-use QD\commerce\quickpay\gateways\Gateway;
-use QD\commerce\quickpay\queue\CapturePayment;
 use craft\commerce\records\TaxRate;
 
 class Taxes extends Component
