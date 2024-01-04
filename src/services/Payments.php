@@ -7,28 +7,32 @@ use craft\commerce\models\Transaction;
 use craft\commerce\services\Gateways;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
-use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\models\PaymentRequestModel;
 use QD\commerce\quickpay\Plugin;
 use QD\commerce\quickpay\responses\CaptureResponse;
 use QD\commerce\quickpay\responses\PaymentResponse;
 use craft\commerce\records\Transaction as TransactionRecord;
+use QD\commerce\quickpay\models\PaymentResponseModel;
+use QD\commerce\quickpay\responses\RefundResponse;
+use stdClass;
+use yii\base\Exception;
+use craft\helpers\Json;
+use craft\helpers\UrlHelper;
+
+use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
 use QD\commerce\quickpay\events\BasketSave;
 use QD\commerce\quickpay\events\ShippingTotal;
-use QD\commerce\quickpay\responses\RefundResponse;
-use stdClass;
-use yii\base\Exception;
 
 class Payments extends Component
 {
-
+	//* Events
 	const EVENT_BEFORE_BASKET_ADJUSTMENT_AMOUNT = 'beforeBasketAdjustmentAmount';
 	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
-	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
 	const EVENT_BEFORE_BASKET_SAVE = 'beforeBasketSave';
+	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
 
 	public Api $api;
 
@@ -68,8 +72,8 @@ class Payments extends Component
 	public function getPaymentLink(PaymentRequestModel $paymentRequest, stdClass $request): stdClass
 	{
 		//Create link to payment (redirect to it)
-		$amount = $paymentRequest->getLinkPayload();
-		$link = $this->api->put('/payments/' . $request->id . '/link', $amount);
+		$payload = $paymentRequest->getLinkPayload();
+		$link = $this->api->put('/payments/' . $request->id . '/link', $payload);
 
 		return $link;
 	}
@@ -147,9 +151,14 @@ class Payments extends Component
 		}
 
 		//multiplied by 100 because industry standard is to save the amount in "cents"
-		$response = $this->api->post("/payments/{$authorizedTransation->reference}/capture", [
-			'amount' => $amount * 100
-		]);
+		// TODO: Add callback to Payload
+
+		$payload = [
+			'amount' => $amount * 100,
+			// 'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $transaction->reference),
+		];
+
+		$response = $this->api->post("/payments/{$authorizedTransation->reference}/capture", $payload);
 
 		return new CaptureResponse($response);
 	}
@@ -241,6 +250,7 @@ class Payments extends Component
 		return $gateway;
 	}
 
+	//* Basket
 	/**
 	 * Get the quickpay basket payload
 	 *
@@ -336,6 +346,7 @@ class Payments extends Component
 		return $lines;
 	}
 
+	// Klarna
 	/**
 	 * Get the basket payload required for klarna to work
 	 *
@@ -431,6 +442,7 @@ class Payments extends Component
 		return $event->basket;
 	}
 
+	//* Shipping
 	/**
 	 * Get the payload for the selected shipping method
 	 *
@@ -460,9 +472,11 @@ class Payments extends Component
 		];
 	}
 
+
 	/**
-	 * Function to handle subtracting negative adjustment amounts from line items, not going below 0
-	 *
+	 * Handle subtracting negative adjustment amounts from line items, not going below 0
+	 * ? Used in the generation of a Klarna basket payload
+	 * 
 	 * @param float $itemAmount
 	 * @param float $amountToSubtract
 	 * @return array
@@ -490,5 +504,48 @@ class Payments extends Component
 				'amountLeftToSubtract' => $amountToSubtract - $itemAmount,
 			];
 		}
+	}
+
+
+
+	/**
+	 * Return the model for a Quickpay PaymentResponse
+	 *
+	 * @param string $body
+	 * @return PaymentResponseModel
+	 */
+	public function getResponseModel(string $body): PaymentResponseModel
+	{
+		$data = Json::decode($body);
+
+		return new PaymentResponseModel(
+			id: $data['id'] ?? 0,
+			ulid: $data['ulid'] ?? '',
+			merchant_id: $data['merchant_id'] ?? 0,
+			order_id: $data['order_id'] ?? 0,
+			accepted: $data['accepted'] ?? false,
+			type: $data['type'] ?? '',
+			text_on_statement: $data['text_on_statement'] ?? '',
+			branding_id: $data['branding_id'] ?? null,
+			variables: $data['variables'] ?? [],
+			currency: $data['currency'] ?? '',
+			state: $data['state'] ?? '',
+			metadata: $data['metadata'] ?? [],
+			link: $data['link'] ?? [],
+			shipping_address: $data['shipping_address'] ?? null,
+			invoice_address: $data['invoice_address'] ?? null,
+			basket: $data['basket'] ?? [],
+			shipping: $data['shipping'] ?? null,
+			operations: $data['operations'] ?? [],
+			test_mode: $data['test_mode'] ?? false,
+			acquirer: $data['acquirer'] ?? '',
+			facilitator: $data['facilitator'] ?? null,
+			created_at: $data['created_at'] ?? '',
+			updated_at: $data['updated_at'] ?? '',
+			retented_at: $data['retented_at'] ?? '',
+			balance: $data['balance'] ?? 0,
+			fee: $data['fee'] ?? null,
+			deadline_at: $data['deadline_at'] ?? null,
+		);
 	}
 }

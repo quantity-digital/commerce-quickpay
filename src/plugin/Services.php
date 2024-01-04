@@ -22,7 +22,7 @@ trait Services
 			'api'      		=> Api::class,
 			'gateway'  		=> Gateway::class,
 			'orders'  		=> Orders::class,
-			'taxes'  		=> Taxes::class,
+			'taxes'  			=> Taxes::class,
 		]);
 	}
 
@@ -66,4 +66,3 @@ trait Services
 		return $this->get('taxes');
 	}
 }
-

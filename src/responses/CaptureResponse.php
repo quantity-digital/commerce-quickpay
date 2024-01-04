@@ -22,7 +22,6 @@ class CaptureResponse implements RequestResponseInterface
 	private bool $_processing = false;
 
 	/**
-	 * TODO: I cannot type this
 	 * Response constructor.
 	 *
 	 * @param mixed $data
