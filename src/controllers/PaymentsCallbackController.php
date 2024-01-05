@@ -63,10 +63,6 @@ class PaymentsCallbackController extends BaseController
 	 */
 	public function actionContinue(string $transactionReference = null): Response
 	{
-		// Request
-		$body = Craft::$app->request->getRawBody();
-		$data = Quickpay::getInstance()->getPayments()->getResponseModel($body);
-
 		// Check if transaction reference is set
 		//TODO: Update to use same logic as notify
 		if (!$transactionReference) {
@@ -75,6 +71,12 @@ class PaymentsCallbackController extends BaseController
 
 		//Get transaction and order
 		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionReference);
+
+		// Set the child transaction reference
+		//? The continue requests contains no body data, therefore we fetch the reference from the parent transaction
+		$data = (object) [
+			'id' => $parentTransaction->reference,
+		];
 
 		return Quickpay::getInstance()->getPaymentsCallbackService()->continue($data, $parentTransaction);
 	}
@@ -117,7 +119,7 @@ class PaymentsCallbackController extends BaseController
 		$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"], $gateway);
 
 		// Handle notify
-		return Quickpay::getInstance()->getPaymentsCallbackService()->notify($data, $parentTransaction);
+		Quickpay::getInstance()->getPaymentsCallbackService()->notify($data, $parentTransaction);
 	}
 
 	/**
