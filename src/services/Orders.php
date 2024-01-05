@@ -80,15 +80,19 @@ class Orders extends Component
 	 */
 	public function updateOrderStatus(Order $order, BaseGatewayInterface $gateway): void
 	{
+		// If auto status is disabled, return
 		if (!App::parseBooleanEnv($gateway->enableAutoStatus)) {
 			return;
 		}
 
+		// Get the "afterCaptureStatus" status.
 		$orderStatus = Commerce::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus));
+
+		// Update the order status
 		$order->orderStatusId = $orderStatus->id;
 
+		// Save the updated status.
 		Craft::$app->getElements()->saveElement($order);
-		return;
 	}
 
 
