@@ -81,7 +81,6 @@ class PaymentsCallbackService extends Component
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
     $gateway = $order->getGateway();
 
-
     //* Authorize
     if (!$isTransactionSuccessful) {
       switch ($data->state) {
@@ -95,6 +94,15 @@ class PaymentsCallbackService extends Component
           Quickpay::getInstance()->getTransactionService()->createAuthorize($data, Transaction::STATUS_FAILED, 'Transaction rejected.');
           break;
       }
+    }
+
+    // Get the last transaction state
+    $isRefunded = Quickpay::getInstance()->getTransactionService()->isRefunded($parent);
+
+    // If the transaction has been refunded, return
+    //? Callback have not yet been implemented for refunds, 
+    if ($isRefunded) {
+      return;
     }
 
     //* Capture

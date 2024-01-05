@@ -89,6 +89,12 @@ class PaymentsCallbackController extends BaseController
 	 */
 	public function actionCancel(string $transactionReference = null): Response
 	{
+		// Check if transaction reference is set
+		//TODO: Update to use same logic as notify
+		if (!$transactionReference) {
+			throw new ForbiddenHttpException('Missing transaction reference.');
+		}
+
 		//Get transaction and order
 		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionReference);
 

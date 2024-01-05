@@ -9,4 +9,6 @@ abstract class Data
   const STATE_PENDING = 'pending';
   const STATE_PROCESSED = 'processed';
   const STATE_REJECTED = 'rejected';
+
+  const TYPE_REFUND = 'refund';
 }

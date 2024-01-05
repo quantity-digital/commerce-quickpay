@@ -171,6 +171,14 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function getMessage(): string
 	{
+		if ($this->isProcessing()) {
+			return 'Transaction processing';
+		}
+
+		if ($this->isSuccessful()) {
+			return 'Transaction captured';
+		}
+
 		return '';
 	}
 
