@@ -5,14 +5,13 @@ namespace QD\commerce\quickpay\queue;
 use Craft;
 use craft\commerce\base\GatewayInterface as BaseGatewayInterface;
 use craft\queue\BaseJob;
-use craft\commerce\Plugin as CommercePlugin;
+use craft\commerce\Plugin as Commerce;
 use craft\commerce\records\Transaction as TransactionRecord;
-use \craft\Commerce\models\Transaction;
 use \craft\Commerce\elements\Order;
 use craft\helpers\App;
 use craft\mail\Message;
 use Exception;
-use QD\commerce\quickpay\Plugin;
+use QD\commerce\quickpay\Plugin as Quickpay;
 use \yii\queue\Queue;
 use \yii\queue\QueueInterface;
 use yii\queue\RetryableJobInterface;
@@ -85,6 +84,7 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 	 */
 	public function execute($queue): void
 	{
+		//? I dont know why this is deprecated, since its still the only option in use.
 		if ($this->transaction) {
 			$transaction = $this->transaction;
 			$order = Order::find()->id($transaction->orderId)->one();
@@ -92,7 +92,7 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 
 		if ($this->orderId) {
 			$order = Order::find()->id($this->orderId)->one();
-			$transaction = Plugin::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
+			$transaction = Quickpay::getInstance()->getOrders()->getSuccessfulTransactionForOrder($order);
 		}
 
 		//No successful transaction found
@@ -104,57 +104,52 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 		$gateway = $order->getGateway();
 
 		//Order is already paid, so we can just update the status
-		if ($order->isPaid && App::parseBooleanEnv($gateway->enableAutoStatus)) {
-			$this->updateOrderStatus($order, $gateway);
+		if ($order->isPaid) {
+			Quickpay::getInstance()->getOrders()->updateOrderStatus($order, $gateway);
 			$this->setProgress($queue, 1);
 			return;
 		}
 
 		//Order is not paid, so we need to capture the transaction
 		if (!$order->isPaid) {
-			$child = CommercePlugin::getInstance()->getPayments()->captureTransaction($transaction);
+
+			// Run the default CraftCMS capture function
+			//? This will create either a Successful or Processing transaction, depending on the callback from quickpay
+			$child = Commerce::getInstance()->getPayments()->captureTransaction($transaction);
+
+			// Get the order for the child transaction
 			$order = $child->order;
+
 			$this->setProgress($queue, .5);
 
-			if ($child->status === TransactionRecord::STATUS_SUCCESS) {
-				$order->updateOrderPaidInformation();
-				if (App::parseBooleanEnv($gateway->enableAutoStatus)) {
-					$this->updateOrderStatus($order, $gateway);
-				}
-			} else {
-				throw new Exception('Could not capture payment');
+			switch ($child->status) {
+				case TransactionRecord::STATUS_SUCCESS:
+					// The capture was imidietly successfull, no callback needed, therefore we just update the craft order
+					$order->updateOrderPaidInformation();
+					Quickpay::getInstance()->getOrders()->updateOrderStatus($order, $gateway);
+					break;
+				case TransactionRecord::STATUS_PROCESSING:
+					// If the capture is still processing, we need to wait for the callback from quickpay
+					break;
+				case TransactionRecord::STATUS_PENDING:
+					// If the capture is pending, we need to wait for the callback from quickpay
+					break;
+				default:
+					throw new Exception('Could not capture payment');
+					break;
 			}
 		}
 
 		$this->setProgress($queue, 1);
 	}
 
-	// Protected Methods
-	// =========================================================================
-
 	/**
-	 * Encapsulates the default description
+	 * Queuejob description
 	 *
 	 * @return string
 	 */
 	protected function defaultDescription(): string
 	{
 		return 'Capture quickpay payment';
-	}
-
-	/**
-	 * Updates order status
-	 *
-	 * @param Order $order to update
-	 * @param Gateway $gateway
-	 * @return void
-	 * @throws Throwable
-	 */
-	protected function updateOrderStatus(Order $order, BaseGatewayInterface $gateway): void
-	{
-		$orderStatus = CommercePlugin::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus));
-		$order->orderStatusId = $orderStatus->id;
-
-		Craft::$app->getElements()->saveElement($order);
 	}
 }

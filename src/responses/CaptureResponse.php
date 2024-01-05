@@ -3,6 +3,7 @@
 namespace QD\commerce\quickpay\responses;
 
 use craft\commerce\base\RequestResponseInterface;
+use QD\commerce\quickpay\plugin\Data;
 
 class CaptureResponse implements RequestResponseInterface
 {
@@ -64,6 +65,11 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function isSuccessful(): bool
 	{
+		if ($this->isProcessing()) {
+			return false;
+		}
+
+
 		if (isset($this->data->message) && strpos($this->data->message, 'Not found:')) {
 			return false;
 		}
@@ -78,7 +84,13 @@ class CaptureResponse implements RequestResponseInterface
 	 */
 	public function isProcessing(): bool
 	{
-		return $this->_processing;
+		// return $this->_processing;
+
+		if ($this->data->state == Data::STATE_PENDING) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -129,37 +129,45 @@ class Payments extends Component
 	 */
 	public function captureFromGateway(Transaction $transaction): CaptureResponse
 	{
+		//* Define
 		$order = $transaction->getOrder();
-		$gateway = $transaction->getGateway();
+		$gateway = $order->getGateway();
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
-		$authorizedAmount     = (float)$transaction->paymentAmount;
+		// $authorizedAmount     = (float)$transaction->paymentAmount;
 
-		// Get the amount to capture
-		$amount = $transaction->paymentAmount;
-
+		//* Set
 		// Set gateway for API
-		$this->api->setGateway($order->getGateway());
+		$this->api->setGateway($gateway);
 
+		//* Amount
+		// Get amount to be captured
+		// TODO: Update to use calculated order total + Add event to allow for custom amount
+		//? multiplied by 100 because industry standard is to save the amount in "cents"
+		$amount = $transaction->paymentAmount * 100;
+
+
+		// TODO: Redundant so far, will be used when above is updated
 		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
-		if ($authorizedAmount < $amount) {
-			$amount = $authorizedAmount;
-		}
+		// if ($authorizedAmount < $amount) {
+		// 	$amount = $authorizedAmount;
+		// }
 
-		if ($authorizedAmount > $amount) {
-			$transaction->amount = $amount;
-			$transaction->paymentAmount = $amount;
-		}
+		// if ($authorizedAmount > $amount) {
+		// 	$transaction->amount = $amount;
+		// 	$transaction->paymentAmount = $amount;
+		// }
 
-		//multiplied by 100 because industry standard is to save the amount in "cents"
-		// TODO: Add callback to Payload
-
+		//* Capture request
+		// Set payload
 		$payload = [
-			'amount' => $amount * 100,
-			// 'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $transaction->reference),
+			'amount' => $amount,
 		];
 
+		// make request to capture payment
 		$response = $this->api->post("/payments/{$authorizedTransation->reference}/capture", $payload);
 
+		// Return capture response
+		//? Will return Either "Pending" for awaiting callback or "Processed" for capture completed
 		return new CaptureResponse($response);
 	}
 

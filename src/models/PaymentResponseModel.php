@@ -6,6 +6,37 @@ use craft\base\Model;
 
 class PaymentResponseModel extends Model
 {
+  /**
+   * Defines the model for the body of the payment response from QuickPay
+   *
+   * @param integer $id
+   * @param string $ulid
+   * @param integer $merchant_id
+   * @param string $order_id
+   * @param string $accepted
+   * @param string $type
+   * @param string $text_on_statement
+   * @param integer|null $branding_id
+   * @param array $variables
+   * @param string $currency
+   * @param string $state
+   * @param array $metadata
+   * @param array $link
+   * @param array|null $shipping_address
+   * @param array|null $invoice_address
+   * @param array $basket
+   * @param array|null $shipping
+   * @param array $operations
+   * @param boolean $test_mode
+   * @param string $acquirer
+   * @param string|null $facilitator
+   * @param string $created_at
+   * @param string $updated_at
+   * @param string $retented_at
+   * @param float $balance
+   * @param float|null $fee
+   * @param string|null $deadline_at
+   */
   public function __construct(
     public readonly int $id,
     public readonly string $ulid,

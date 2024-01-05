@@ -102,7 +102,7 @@ class PaymentRequestModel extends Model
 			'amount'       => $cents,
 			'continue_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/continue/' . $this->getTransactionReference()),
 			'cancel_url'   => UrlHelper::siteUrl('quickpay/callbacks/payments/cancel/' . $this->getTransactionReference()),
-			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $this->getTransactionReference()),
+			// 'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $this->getTransactionReference()),
 		];
 
 		//Is paymentmethods defined in settings
@@ -124,9 +124,6 @@ class PaymentRequestModel extends Model
 		if ($brandingId) {
 			$payload['branding_id'] = $brandingId;
 		}
-
-		//For testing only
-		$payload['callback_url'] = str_replace('localhost:8002', 'qddev.eu.ngrok.io', $payload['callback_url']);
 
 		return $payload;
 	}
