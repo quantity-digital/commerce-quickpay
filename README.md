@@ -1,6 +1,6 @@
 <p><img src="./src/icon.svg" width="100" height="100" alt="QuickPay for Craft Commerce icon"></p>
 
-<h1>QuickPay for Craft Commerce</h1>
+# QuickPay for Craft Commerce
 
 This plugin provides an [QuickPay](https://www.quickpay.net/) integration for [Craft Commerce](https://craftcms.com/commerce).
 
@@ -31,11 +31,17 @@ composer require quantity-digital/commerce-quickpay
 ./craft install/plugin commerce-quickpay
 ```
 
-## Setup
+## Quickpay setup
+
+Add to following Callback url to your Quickpay's Integration Default payment settings:
+
+> {your_shop_url}/quickpay/callbacks/payments/notify
+
+## CraftCMS setup
 
 To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, create a new gateway, and set the gateway type to “QuickPay”.
 
-> **Tip:** The API Key and Private key key settings can be set to environment variables. See [Environmental Configuration](https://docs.craftcms.com/v3/config/environments.html) in the Craft docs for more information.
+> **Tip:** The API Key and Private key key settings can be set to environment variables. See [Environmental Configuration](https://craftcms.com/docs/4.x/config/) in the Craft docs for more information.
 
 ## Notice
 

@@ -129,9 +129,8 @@ class Plugin extends \craft\base\Plugin
 			function (RegisterUrlRulesEvent $event) {
 				$event->rules = array_merge($event->rules, [
 					'quickpay/callbacks/payments/continue/<transactionReference>' => 'commerce-quickpay/payments-callback/continue',
-					'quickpay/callbacks/payments/notify/<transactionReference>' => 'commerce-quickpay/payments-callback/notify',
-					'quickpay/callbacks/payments/notify' => 'commerce-quickpay/payments-callback/notify',
 					'quickpay/callbacks/payments/cancel/<transactionReference>' => 'commerce-quickpay/payments-callback/cancel',
+					'quickpay/callbacks/payments/notify' => 'commerce-quickpay/payments-callback/notify',
 				]);
 			}
 		);

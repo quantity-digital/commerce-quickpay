@@ -7,6 +7,7 @@ use craft\base\Component;
 use craft\commerce\models\Transaction as TransactionModel;
 use craft\commerce\Plugin as Commerce;
 use craft\commerce\records\Transaction;
+use QD\commerce\quickpay\models\PaymentResponseModel;
 use QD\commerce\quickpay\plugin\Data;
 use QD\commerce\quickpay\Plugin as Quickpay;
 use yii\web\Response;
@@ -16,11 +17,11 @@ class PaymentsCallbackService extends Component
   /**
    * Function to be run if quickpay calls the continue_url
    *
-   * @param mixed $data
+   * @param PaymentResponseModel $response
    * @param TransactionModel $parent
    * @return Response
    */
-  public function continue(mixed $data, TransactionModel $parent): Response
+  public function continue(PaymentResponseModel $response, TransactionModel $parent): Response
   {
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
 
@@ -37,7 +38,7 @@ class PaymentsCallbackService extends Component
     }
 
     // Create Processing transaction
-    Quickpay::getInstance()->getTransactionService()->createAuthorize($data, Transaction::STATUS_PROCESSING, 'Transaction pending final confirmation from Quickpay.');
+    Quickpay::getInstance()->getTransactionService()->createAuthorize($parent->reference, $response, Transaction::STATUS_PROCESSING, 'Transaction pending final confirmation from Quickpay.');
 
     // Redirect to return url
     return Craft::$app->getResponse()->redirect($order->returnUrl);
@@ -70,8 +71,17 @@ class PaymentsCallbackService extends Component
    * @param TransactionModel $parent
    * @return void
    */
-  public function notify(mixed $data, TransactionModel $parent): void
+  public function notify(PaymentResponseModel $response, TransactionModel $parent): void
   {
+    // Check if the transaction has been refunded
+    $isRefunded = Quickpay::getInstance()->getTransactionService()->isRefunded($parent);
+
+    // If the transaction has been refunded, return
+    //? Callback have not yet been implemented for refunds, therefore the notify function should not be run
+    if ($isRefunded) {
+      return;
+    }
+
     // Check if transaction is successful
     //? This will return true if either the current transaction or its parent transaction is successful
     $isTransactionSuccessful = Commerce::getInstance()->getTransactions()->isTransactionSuccessful($parent);
@@ -83,39 +93,30 @@ class PaymentsCallbackService extends Component
 
     //* Authorize
     if (!$isTransactionSuccessful) {
-      switch ($data->state) {
+      switch ($response->state) {
         case Data::STATE_NEW:
           //? If the parent transaction is not successful (Initial / Redirect), and the update State is "New" and Accepted, Quickpay has authorized the transaction
-          Quickpay::getInstance()->getTransactionService()->createAuthorize($data, Transaction::STATUS_SUCCESS, 'Transaction authorized.');
+          Quickpay::getInstance()->getTransactionService()->createAuthorize($parent->reference, $response, Transaction::STATUS_SUCCESS, 'Transaction authorized.');
           break;
 
         case Data::STATE_REJECTED:
           //? If the parent transaction is not successful (Initial / Redirect), and the update State is "Rejected" quickpay has rejected the transaction
-          Quickpay::getInstance()->getTransactionService()->createAuthorize($data, Transaction::STATUS_FAILED, 'Transaction rejected.');
+          Quickpay::getInstance()->getTransactionService()->createAuthorize($parent->reference, $response, Transaction::STATUS_FAILED, 'Transaction rejected.');
           break;
       }
     }
 
-    // Get the last transaction state
-    $isRefunded = Quickpay::getInstance()->getTransactionService()->isRefunded($parent);
-
-    // If the transaction has been refunded, return
-    //? Callback have not yet been implemented for refunds, 
-    if ($isRefunded) {
-      return;
-    }
-
     //* Capture
     //? If the Quickpay state is "Processed" and the order is not yet set as paid in Craft Commerce, update the order
-    if (!$order->getIsPaid() && $data->state === Data::STATE_PROCESSED) {
+    if (!$order->getIsPaid() && $response->state === Data::STATE_PROCESSED) {
       // Create the capture transaction
-      Quickpay::getInstance()->getTransactionService()->createCapture($data, Transaction::STATUS_SUCCESS, 'Transaction captured.');
+      Quickpay::getInstance()->getTransactionService()->createCapture($parent->reference, $response, Transaction::STATUS_SUCCESS, 'Transaction captured.');
 
       // Update Craft order paid information
       $order->updateOrderPaidInformation();
 
       // Auto update the order status
-      Quickpay::getInstance()->getOrders()->updateOrderStatus($order, $gateway);
+      Quickpay::getInstance()->getOrders()->setAfterCaptureStatus($order, $gateway);
       return;
     }
 

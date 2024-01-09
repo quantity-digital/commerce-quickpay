@@ -74,11 +74,13 @@ class PaymentsCallbackController extends BaseController
 
 		// Set the child transaction reference
 		//? The continue requests contains no body data, therefore we fetch the reference from the parent transaction
-		$data = (object) [
+		$body = json_encode([
 			'id' => $parentTransaction->reference,
-		];
+		]);
 
-		return Quickpay::getInstance()->getPaymentsCallbackService()->continue($data, $parentTransaction);
+		$response = Quickpay::getInstance()->getPayments()->getResponseModel($body);
+
+		return Quickpay::getInstance()->getPaymentsCallbackService()->continue($response, $parentTransaction);
 	}
 
 	/**
@@ -113,10 +115,10 @@ class PaymentsCallbackController extends BaseController
 		// Request
 		//? This is the response from quickpay, and is suppling the updated status of the parent transaction
 		$body = Craft::$app->request->getRawBody();
-		$data = Quickpay::getInstance()->getPayments()->getResponseModel($body);
+		$response = Quickpay::getInstance()->getPayments()->getResponseModel($body);
 
 		// Get the craft transaction
-		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByReference($data->id);
+		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByReference($response->id);
 
 		// Get the gateway of the transaction
 		$gateway = $parentTransaction->getGateway();
@@ -125,7 +127,7 @@ class PaymentsCallbackController extends BaseController
 		$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"], $gateway);
 
 		// Handle notify
-		Quickpay::getInstance()->getPaymentsCallbackService()->notify($data, $parentTransaction);
+		Quickpay::getInstance()->getPaymentsCallbackService()->notify($response, $parentTransaction);
 	}
 
 	/**

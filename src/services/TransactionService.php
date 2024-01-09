@@ -2,59 +2,40 @@
 
 namespace QD\commerce\quickpay\services;
 
-use Craft;
-use craft\base\Component;
-use craft\commerce\models\Transaction as TransactionModel;
-use craft\commerce\Plugin as Commerce;
 use craft\commerce\records\Transaction as TransactionRecord;
-use QD\commerce\quickpay\plugin\Data;
-use craft\helpers\App;
-use Exception;
-
-use craft\commerce\base\Gateway;
+use craft\commerce\models\Transaction as TransactionModel;
+use QD\commerce\quickpay\models\PaymentResponseModel;
+use craft\commerce\Plugin as Commerce;
 use craft\commerce\db\Table;
-use craft\commerce\elements\Order;
-use craft\commerce\errors\CurrencyException;
-use craft\commerce\errors\OrderStatusException;
-use craft\commerce\errors\TransactionException;
-use craft\commerce\events\TransactionEvent;
-use craft\commerce\helpers\Currency;
-use craft\commerce\models\Transaction;
-use craft\commerce\Plugin;
+use craft\base\Component;
 use craft\db\Query;
-use craft\errors\ElementNotFoundException;
-use craft\helpers\ArrayHelper;
-use Throwable;
-use yii\base\InvalidConfigException;
-use yii\db\StaleObjectException;
+use Exception;
 
 class TransactionService extends Component
 {
   //* Create
-
-
   /**
    * Create a child transaction of the type Authorize
    *
-   * @param mixed $data
-   * @param TransactionModel $parent
+   * @param integer $reference The Quickpay id
+   * @param PaymentResponseModel $response
    * @param string $status
    * @param string $message
    * @return TransactionModel
    */
-  public function createAuthorize(mixed $data, string $status, string $message = ''): TransactionModel
+  public function createAuthorize(int $reference, PaymentResponseModel $response, string $status, string $message = ''): TransactionModel
   {
     // If data is an array, convert it to an object
-    if (is_array($data)) {
-      $data = (object) $data;
+    if (is_array($response)) {
+      $response = (object) $response;
     }
 
-    if (!isset($data->id) || !$data->id) {
+    if ($reference) {
       throw new Exception("No Quickpay reference supplied", 1);
     }
 
     // Get the parent transaction
-    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($data->id);
+    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
 
     // Get the order belonging to the transaction
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
@@ -69,10 +50,10 @@ class TransactionService extends Component
     $transaction->status = $status;
 
     // Set the transaction reference to the Quickpay id
-    $transaction->reference = $data->id;
+    $transaction->reference = $reference;
 
     // Set the transaction response to the response from quickpay
-    $transaction->response = $data;
+    $transaction->response = $response;
 
     // Define a message for the transaction
     $transaction->message = $message;
@@ -89,25 +70,25 @@ class TransactionService extends Component
   /**
    * Create a child transaction of the type Capture
    *
-   * @param mixed $data
-   * @param TransactionModel $parent
+   * @param integer $reference The Quickpay id
+   * @param PaymentResponseModel $response
    * @param string $status
    * @param string $message
    * @return TransactionModel
    */
-  public function createCapture(mixed $data, string $status, string $message = ''): TransactionModel
+  public function createCapture(int $reference, PaymentResponseModel $response, string $status, string $message = ''): TransactionModel
   {
     // If data is an array, convert it to an object
-    if (is_array($data)) {
-      $data = (object) $data;
+    if (is_array($response)) {
+      $response = (object) $response;
     }
 
-    if (!isset($data->id) || !$data->id) {
+    if ($reference) {
       throw new Exception("No Quickpay reference supplied", 1);
     }
 
     // Get the parent transaction
-    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($data->id);
+    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
 
     // Get the order belonging to the transaction
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
@@ -122,10 +103,10 @@ class TransactionService extends Component
     $transaction->status = $status;
 
     // Set the transaction reference to the Quickpay id
-    $transaction->reference = $data->id;
+    $transaction->reference = $reference;
 
     // Set the transaction response to the response from quickpay
-    $transaction->response = $data;
+    $transaction->response = $response;
 
     // Define a message for the transaction
     $transaction->message = $message;

@@ -105,7 +105,7 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 
 		//Order is already paid, so we can just update the status
 		if ($order->isPaid) {
-			Quickpay::getInstance()->getOrders()->updateOrderStatus($order, $gateway);
+			Quickpay::getInstance()->getOrders()->setAfterCaptureStatus($order, $gateway);
 			$this->setProgress($queue, 1);
 			return;
 		}
@@ -126,7 +126,7 @@ class CapturePayment extends BaseJob implements RetryableJobInterface
 				case TransactionRecord::STATUS_SUCCESS:
 					// The capture was imidietly successfull, no callback needed, therefore we just update the craft order
 					$order->updateOrderPaidInformation();
-					Quickpay::getInstance()->getOrders()->updateOrderStatus($order, $gateway);
+					Quickpay::getInstance()->getOrders()->setAfterCaptureStatus($order, $gateway);
 					break;
 				case TransactionRecord::STATUS_PROCESSING:
 					// If the capture is still processing, we need to wait for the callback from quickpay
