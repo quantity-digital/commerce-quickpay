@@ -2,19 +2,18 @@
 
 namespace QD\commerce\quickpay\services;
 
-use Craft;
-use craft\helpers\App;
 use craft\base\Component;
 use craft\commerce\elements\Order;
-use craft\commerce\models\Transaction;
-use craft\commerce\Plugin as CommercePlugin;
-use QD\commerce\quickpay\gateways\Gateway;
-use QD\commerce\quickpay\queue\CapturePayment;
 use craft\commerce\records\TaxRate;
 
 class Taxes extends Component
 {
-
+	/**
+	 * Gets the product tax rate for an order
+	 *
+	 * @param Order $order
+	 * @return integer|float
+	 */
 	public function getProductTaxRate(Order $order): int|float
 	{
 		$rates = $this->getTaxRatesForOrder($order);
@@ -22,14 +21,26 @@ class Taxes extends Component
 		return $rates['lineVat'];
 	}
 
-	public function getShippingTaxRate(Order $order)
+	/**
+	 * Gets the shipping tax rate for an order
+	 *
+	 * @param Order $order
+	 * @return int|float
+	 */
+	public function getShippingTaxRate(Order $order): int|float
 	{
 		$rates = $this->getTaxRatesForOrder($order);
 
 		return $rates['shippingVat'];
 	}
 
-	public function getTaxRatesForOrder(Order $order)
+	/**
+	 * Gets the tax rates for an order
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getTaxRatesForOrder(Order $order): array
 	{
 		$taxRates = $this->getAppliedTaxes($order);
 		$lineVat = 0;
@@ -65,7 +76,13 @@ class Taxes extends Component
 		];
 	}
 
-	public function getAppliedTaxes($order)
+	/**
+	 * Get the applied taxes for an order
+	 *
+	 * @param Order $order
+	 * @return array
+	 */
+	public function getAppliedTaxes(Order $order): array
 	{
 		$adjustments = $order->getAdjustments();
 		$taxRates = [];

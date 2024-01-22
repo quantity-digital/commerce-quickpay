@@ -4,11 +4,10 @@ namespace QD\commerce\quickpay\controllers;
 
 use Craft;
 use craft\commerce\controllers\BaseController;
-use craft\commerce\Plugin;
-use craft\helpers\Json;
+use craft\commerce\Plugin as Commerce;
 use craft\helpers\App;
 use QD\commerce\quickpay\gateways\Gateway;
-use QD\commerce\quickpay\Plugin as QuickpayPlugin;
+use QD\commerce\quickpay\Plugin as Quickpay;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
@@ -22,7 +21,9 @@ class PaymentsCallbackController extends BaseController
 		'notify' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE,
 		'cancel' => self::ALLOW_ANONYMOUS_LIVE | self::ALLOW_ANONYMOUS_OFFLINE
 	];
-    public $enableCsrfValidation = false;
+
+	// Disable CSRF validation for the controller
+	public $enableCsrfValidation = false;
 
 	/**
 	 * Init the Controller
@@ -35,6 +36,9 @@ class PaymentsCallbackController extends BaseController
 	}
 
 	/**
+	 * Before action
+	 * ? Not sure what this does, but I dont dare to remove it
+	 * 
 	 * @param \yii\base\Action $action
 	 * @return bool
 	 * @throws \craft\web\ServiceUnavailableHttpException
@@ -51,117 +55,79 @@ class PaymentsCallbackController extends BaseController
 	}
 
 	/**
-	 *
+	 * Function to be run if quickpay calls the continue_url
+	 * ? This occours when Quickpay can't authorize the transaction right away, we are therefore awaiting the callback from quickpay
+	 * 
 	 * @param string|null $transactionReference
 	 * @return Response
 	 */
 	public function actionContinue(string $transactionReference = null): Response
 	{
+		// Check if transaction reference is set
+		//TODO: Update to use same logic as notify
+		if (!$transactionReference) {
+			throw new ForbiddenHttpException('Missing transaction reference.');
+		}
+
 		//Get transaction and order
-		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
-		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
-		//Order is already paid
-		if ($order->getIsPaid()) {
-			return Craft::$app->getResponse()->redirect($order->returnUrl);
-		}
+		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionReference);
 
-		// If it's successful already, we're good.
-		if (Plugin::getInstance()->getTransactions()->isTransactionSuccessful($authTransaction)) {
-			return Craft::$app->getResponse()->redirect($order->returnUrl);
-		}
+		// Set the child transaction reference
+		//? The continue requests contains no body data, therefore we fetch the reference from the parent transaction
+		$body = json_encode([
+			'id' => $parentTransaction->reference,
+		]);
 
-		//Create a new transaction with processing
-		$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
-		$transaction->status = \craft\commerce\records\Transaction::STATUS_PROCESSING;
-		$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
-		$transaction->message = 'Authorize request completed. Waiting for final confirmation from Quickpay.';
-		Plugin::getInstance()->transactions->saveTransaction($transaction);
+		$response = Quickpay::getInstance()->getPayments()->getResponseModel($body);
 
-		return Craft::$app->getResponse()->redirect($order->returnUrl);
+		return Quickpay::getInstance()->getPaymentsCallbackService()->continue($response, $parentTransaction);
 	}
 
 	/**
+	 * Cancel the transaction
+	 * 
 	 * @param string|null $transactionReference
 	 * @return Response
 	 */
 	public function actionCancel(string $transactionReference = null): Response
 	{
-		//Get transaction and order
-		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
-		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
-
-		//Enable recalculation for order
-		QuickpayPlugin::getInstance()->orders->enableCalculation($order);
-		QuickpayPlugin::getInstance()->payments->cancelLinkFromGateway($authTransaction);
-
-		return Craft::$app->getResponse()->redirect($order->cancelUrl);
-	}
-
-	/**
-	 * TODO: Figure out what this does
-	 *
-	 * @param string|null $transactionReference
-	 * @return void
-	 */
-	public function actionNotify(string $transactionReference = null): void
-	{
+		// Check if transaction reference is set
+		//TODO: Update to use same logic as notify
 		if (!$transactionReference) {
 			throw new ForbiddenHttpException('Missing transaction reference.');
 		}
 
-		if (!isset($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"])) {
-			throw new ForbiddenHttpException('Missing Checksum.');
-		}
+		//Get transaction and order
+		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByHash($transactionReference);
 
-		$authTransaction = Plugin::getInstance()->transactions->getTransactionByHash($transactionReference);
+		return Quickpay::getInstance()->getPaymentsCallbackService()->cancel($parentTransaction);
+	}
 
-		//Validate checksum
-		if (!$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"], $authTransaction->getGateway())) {
-			throw new ForbiddenHttpException('Wrong Checksum.');
-		}
-
-		//Get requesy body
+	/**
+	 * Update an orders transation and status on Quickpay callback
+	 * ? This will usually be called imidiatly after the request, but can be delayed up to 24 hours
+	 * 
+	 * @param string|null $transactionReference
+	 * @return void
+	 */
+	public function actionNotify(): void
+	{
+		// Request
+		//? This is the response from quickpay, and is suppling the updated status of the parent transaction
 		$body = Craft::$app->request->getRawBody();
-		$data = Json::decode($body);
+		$response = Quickpay::getInstance()->getPayments()->getResponseModel($body);
 
-		$isTransactionSuccessful = Plugin::getInstance()->getTransactions()->isTransactionSuccessful($authTransaction);
-		$order = Plugin::getInstance()->orders->getOrderById($authTransaction->orderId);
+		// Get the craft transaction
+		$parentTransaction = Commerce::getInstance()->getTransactions()->getTransactionByReference($response->id);
 
-		if (!$isTransactionSuccessful && $data['accepted'] && $data['state'] === 'new') {
-			//Create a new transaction with processing
-			$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
-			$transaction->status = \craft\commerce\records\Transaction::STATUS_SUCCESS;
-			$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
-			$transaction->reference = $data['id'];
-			$transaction->response = $body;
-			$transaction->message = 'Transaction authorized.';
-			Plugin::getInstance()->transactions->saveTransaction($transaction);
-			return;
-		}
+		// Get the gateway of the transaction
+		$gateway = $parentTransaction->getGateway();
 
-		if (!$isTransactionSuccessful && $data['state'] === 'rejected') {
-			//Create a new transaction with failed
-			$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
-			$transaction->status = \craft\commerce\records\Transaction::STATUS_FAILED;
-			$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
-			$transaction->reference = $data['id'];
-			$transaction->response = $body;
-			$transaction->message = 'Transaction rejected.';
-			Plugin::getInstance()->transactions->saveTransaction($transaction);
-			return;
-		}
+		// Validate the checksum
+		$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"] ?? '', $gateway);
 
-		if (!$order->getIsPaid() && $data['state'] === 'processed') {
-			//Create a new transaction with success
-			$transaction = Plugin::getInstance()->transactions->createTransaction($order, $authTransaction);
-			$transaction->status = \craft\commerce\records\Transaction::STATUS_SUCCESS;
-			$transaction->type = \craft\commerce\records\Transaction::TYPE_CAPTURE;
-			$transaction->reference = $data['id'];
-			$transaction->response = $body;
-			$transaction->message = 'Transaction captured offsite.';
-			Plugin::getInstance()->transactions->saveTransaction($transaction);
-			return;
-		}
+		// Handle notify
+		Quickpay::getInstance()->getPaymentsCallbackService()->notify($response, $parentTransaction);
 	}
 
 	/**
@@ -173,8 +139,19 @@ class PaymentsCallbackController extends BaseController
 	 */
 	protected function validateSha256Checksum(string $checksum, Gateway $gateway): bool
 	{
+		if (!$checksum) {
+			throw new ForbiddenHttpException('Missing Checksum.');
+		}
+
 		$base = file_get_contents("php://input");
 		$privateKey = App::parseEnv($gateway->private_key);
-		return (hash_hmac("sha256", $base, $privateKey) === $checksum);
+
+		$valid = (hash_hmac("sha256", $base, $privateKey) === $checksum);
+
+		if (!$valid) {
+			throw new ForbiddenHttpException('Invalid Checksum.');
+		}
+
+		return $valid;
 	}
 }

@@ -10,6 +10,9 @@ use craft\commerce\models\Transaction;
 use craft\commerce\Plugin as CommercePlugin;
 use QD\commerce\quickpay\gateways\Gateway;
 use QD\commerce\quickpay\queue\CapturePayment;
+use craft\commerce\base\GatewayInterface as BaseGatewayInterface;
+use craft\commerce\Plugin as Commerce;
+use Exception;
 
 class Orders extends Component
 {
@@ -67,6 +70,34 @@ class Orders extends Component
 		}
 
 		return false;
+	}
+
+	/**
+	 * Update the order status
+	 *
+	 * @param Order $order
+	 * @param BaseGatewayInterface $gateway
+	 * @return void
+	 */
+	public function setAfterCaptureStatus(Order $order, BaseGatewayInterface $gateway): void
+	{
+		// If auto status is disabled, return
+		if (!App::parseBooleanEnv($gateway->enableAutoStatus)) {
+			return;
+		}
+
+		// Get the "afterCaptureStatus" status.
+		$orderStatus = Commerce::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus));
+
+		if (!$orderStatus) {
+			throw new Exception("After capture status not found", 1);
+		}
+
+		// Update the order status
+		$order->orderStatusId = $orderStatus->id;
+
+		// Save the updated status.
+		Craft::$app->getElements()->saveElement($order);
 	}
 
 
