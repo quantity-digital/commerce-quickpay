@@ -30,7 +30,7 @@ class TransactionService extends Component
       $response = (object) $response;
     }
 
-    if ($reference) {
+    if (!$reference) {
       throw new Exception("No Quickpay reference supplied", 1);
     }
 
@@ -83,7 +83,7 @@ class TransactionService extends Component
       $response = (object) $response;
     }
 
-    if ($reference) {
+    if (!$reference) {
       throw new Exception("No Quickpay reference supplied", 1);
     }
 

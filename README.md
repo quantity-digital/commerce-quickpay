@@ -31,12 +31,6 @@ composer require quantity-digital/commerce-quickpay
 ./craft install/plugin commerce-quickpay
 ```
 
-## Quickpay setup
-
-Add to following Callback url to your Quickpay's Integration Default payment settings:
-
-> {your_shop_url}/quickpay/callbacks/payments/notify
-
 ## CraftCMS setup
 
 To add an QuickPay payment gateway, go to Commerce → Settings → Gateways, create a new gateway, and set the gateway type to “QuickPay”.

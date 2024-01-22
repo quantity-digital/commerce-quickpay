@@ -19,7 +19,6 @@ use stdClass;
 use yii\base\Exception;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
-
 use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
@@ -163,8 +162,13 @@ class Payments extends Component
 			'amount' => $amount,
 		];
 
+		// Set custom headers
+		$headers = [
+			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify')
+		];
+
 		// make request to capture payment
-		$response = $this->api->post("/payments/{$authorizedTransation->reference}/capture", $payload);
+		$response = $this->api->setHeaders($headers)->post("/payments/{$authorizedTransation->reference}/capture", $payload);
 
 		// Return capture response
 		//? Will return Either "Pending" for awaiting callback or "Processed" for capture completed

@@ -73,15 +73,6 @@ class PaymentsCallbackService extends Component
    */
   public function notify(PaymentResponseModel $response, TransactionModel $parent): void
   {
-    // Check if the transaction has been refunded
-    $isRefunded = Quickpay::getInstance()->getTransactionService()->isRefunded($parent);
-
-    // If the transaction has been refunded, return
-    //? Callback have not yet been implemented for refunds, therefore the notify function should not be run
-    if ($isRefunded) {
-      return;
-    }
-
     // Check if transaction is successful
     //? This will return true if either the current transaction or its parent transaction is successful
     $isTransactionSuccessful = Commerce::getInstance()->getTransactions()->isTransactionSuccessful($parent);

@@ -124,7 +124,7 @@ class PaymentsCallbackController extends BaseController
 		$gateway = $parentTransaction->getGateway();
 
 		// Validate the checksum
-		$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"], $gateway);
+		$this->validateSha256Checksum($_SERVER["HTTP_QUICKPAY_CHECKSUM_SHA256"] ?? '', $gateway);
 
 		// Handle notify
 		Quickpay::getInstance()->getPaymentsCallbackService()->notify($response, $parentTransaction);

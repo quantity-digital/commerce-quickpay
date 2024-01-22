@@ -102,7 +102,7 @@ class PaymentRequestModel extends Model
 			'amount'       => $cents,
 			'continue_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/continue/' . $this->getTransactionReference()),
 			'cancel_url'   => UrlHelper::siteUrl('quickpay/callbacks/payments/cancel/' . $this->getTransactionReference()),
-			// 'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify/' . $this->getTransactionReference()),
+			'callback_url' => UrlHelper::siteUrl('quickpay/callbacks/payments/notify'),
 		];
 
 		//Is paymentmethods defined in settings
