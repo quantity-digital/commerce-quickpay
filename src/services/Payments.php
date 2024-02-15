@@ -23,6 +23,7 @@ use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
 use QD\commerce\quickpay\events\BasketSave;
+use QD\commerce\quickpay\events\PaymentCaptureAmount;
 use QD\commerce\quickpay\events\ShippingTotal;
 
 class Payments extends Component
@@ -32,6 +33,7 @@ class Payments extends Component
 	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
 	const EVENT_BEFORE_BASKET_SAVE = 'beforeBasketSave';
 	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
+	const EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT = 'beforePaymentCaptureAmount';
 
 	public Api $api;
 
@@ -132,40 +134,45 @@ class Payments extends Component
 		$order = $transaction->getOrder();
 		$gateway = $order->getGateway();
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
-		// $authorizedAmount     = (float)$transaction->paymentAmount;
-
-		//* Set
-		// Set gateway for API
-		$this->api->setGateway($gateway);
+		$authorizedAmount = (float)$transaction->paymentAmount;
 
 		//* Amount
-		// Get amount to be captured
-		// TODO: Update to use calculated order total + Add event to allow for custom amount
+		$amount = (float) Currency::formatAsCurrency($order->getOutstandingBalance(), $order->paymentCurrency, $gateway->convertAmount, false, true);
+
+		$event = new PaymentCaptureAmount([
+			'order' => $order,
+			'amount' => $amount,
+
+		]);
+		$this->trigger(self::EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT, $event);
+
+		// Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
+		if ($authorizedAmount <= $event->amount) {
+			$event->amount = $authorizedAmount;
+		}
+
+		if ($authorizedAmount > $event->amount) {
+			$transaction->amount = $order->getOutstandingBalance();
+			$transaction->paymentAmount = $event->amount;
+		}
+
+		// Convert to cents
 		//? multiplied by 100 because industry standard is to save the amount in "cents"
-		$amount = $transaction->paymentAmount * 100;
-
-
-		// TODO: Redundant so far, will be used when above is updated
-		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
-		// if ($authorizedAmount < $amount) {
-		// 	$amount = $authorizedAmount;
-		// }
-
-		// if ($authorizedAmount > $amount) {
-		// 	$transaction->amount = $amount;
-		// 	$transaction->paymentAmount = $amount;
-		// }
+		$cents = $event->amount * 100;
 
 		//* Capture request
 		// Set payload
 		$payload = [
-			'amount' => $amount,
+			'amount' => $cents,
 		];
 
 		// Set custom headers
 		$headers = [
 			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify')
 		];
+
+		// Set gateway for API
+		$this->api->setGateway($gateway);
 
 		// make request to capture payment
 		$response = $this->api->setHeaders($headers)->post("/payments/{$authorizedTransation->reference}/capture", $payload);
