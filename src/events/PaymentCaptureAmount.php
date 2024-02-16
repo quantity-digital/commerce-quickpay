@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Modify the amount to capture be captured in quickpay
+ * Event to modify transaction amount / order a capture is made
  * 
  * @package Quickpay
  */
@@ -23,7 +23,7 @@ class PaymentCaptureAmount extends Event
   /**
    * Amount
    *
-   * @var float
+   * @var float Outstanding balance
    */
   public $amount;
 }

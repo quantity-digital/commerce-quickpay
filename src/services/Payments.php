@@ -136,9 +136,11 @@ class Payments extends Component
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
 		$authorizedAmount = (float)$transaction->paymentAmount;
 
-		//* Amount
+		// Get outstanding amount
+		//? Get and convert the outstanding balance for an order, in case of order adjustments / partial captures
 		$amount = (float) Currency::formatAsCurrency($order->getOutstandingBalance(), $order->paymentCurrency, $gateway->convertAmount, false, true);
 
+		// Trigger event to modify the amount
 		$event = new PaymentCaptureAmount([
 			'order' => $order,
 			'amount' => $amount,
@@ -146,18 +148,23 @@ class Payments extends Component
 		]);
 		$this->trigger(self::EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT, $event);
 
-		// Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
+		// Outstanding amount is larger than the authorized value, set amount to be equal to authorized value
+		//? We can only capure a maximum of the authorized amount
 		if ($authorizedAmount <= $event->amount) {
 			$event->amount = $authorizedAmount;
 		}
 
+		// Authorized amount is larger than the outstanding amount, update the transaction to have correct amounts
 		if ($authorizedAmount > $event->amount) {
+			//? Amount is always defined in the default currency, therefore no convertion should be made
 			$transaction->amount = $order->getOutstandingBalance();
+
+			// Set the payment amount to the events amount data
 			$transaction->paymentAmount = $event->amount;
 		}
 
 		// Convert to cents
-		//? multiplied by 100 because industry standard is to save the amount in "cents"
+		//? Quickpay expects the amount to be in cents
 		$cents = $event->amount * 100;
 
 		//* Capture request
@@ -167,11 +174,12 @@ class Payments extends Component
 		];
 
 		// Set custom headers
+		//? This is the only way, other than having to adjust quickpay itself to define a callback url 
 		$headers = [
 			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify')
 		];
 
-		// Set gateway for API
+		// Set gateway for the API request
 		$this->api->setGateway($gateway);
 
 		// make request to capture payment
