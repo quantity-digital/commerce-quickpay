@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.2.0 - 2024-02-20
+### Fixed
+- Updated capture functionallity to make use of outstanding balance instead of PaymentAmount
+
+### Added
+- Added 'EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT' to modify the amount being captured
+
 ## 4.1.9 - 2024-01-22
 ### Added
 - Callback functionallity on Capture events

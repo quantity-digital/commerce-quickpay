@@ -23,6 +23,7 @@ use craft\commerce\helpers\Currency;
 use QD\commerce\quickpay\events\BasketAdjustmentAmount;
 use QD\commerce\quickpay\events\BasketLineTotal;
 use QD\commerce\quickpay\events\BasketSave;
+use QD\commerce\quickpay\events\PaymentCaptureAmount;
 use QD\commerce\quickpay\events\ShippingTotal;
 
 class Payments extends Component
@@ -32,6 +33,7 @@ class Payments extends Component
 	const EVENT_BEFORE_BASKET_LINE_TOTAL = 'beforeBasketLineTotal';
 	const EVENT_BEFORE_BASKET_SAVE = 'beforeBasketSave';
 	const EVENT_BEFORE_SHIPPING_TOTAL = 'beforeShippingTotal';
+	const EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT = 'beforePaymentCaptureAmount';
 
 	public Api $api;
 
@@ -132,40 +134,53 @@ class Payments extends Component
 		$order = $transaction->getOrder();
 		$gateway = $order->getGateway();
 		$authorizedTransation = $this->getSuccessfulTransactionForOrder($order);
-		// $authorizedAmount     = (float)$transaction->paymentAmount;
+		$authorizedAmount = (float)$transaction->paymentAmount;
 
-		//* Set
-		// Set gateway for API
-		$this->api->setGateway($gateway);
+		// Get outstanding amount
+		//? Get and convert the outstanding balance for an order, in case of order adjustments / partial captures
+		$amount = (float) Currency::formatAsCurrency($order->getOutstandingBalance(), $order->paymentCurrency, $gateway->convertAmount, false, true);
 
-		//* Amount
-		// Get amount to be captured
-		// TODO: Update to use calculated order total + Add event to allow for custom amount
-		//? multiplied by 100 because industry standard is to save the amount in "cents"
-		$amount = $transaction->paymentAmount * 100;
+		// Trigger event to modify the amount
+		$event = new PaymentCaptureAmount([
+			'order' => $order,
+			'amount' => $amount,
 
+		]);
+		$this->trigger(self::EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT, $event);
 
-		// TODO: Redundant so far, will be used when above is updated
-		//Outstanding amount is larger than the authorized value - set amount to be equal to authorized value
-		// if ($authorizedAmount < $amount) {
-		// 	$amount = $authorizedAmount;
-		// }
+		// Outstanding amount is larger than the authorized value, set amount to be equal to authorized value
+		//? We can only capure a maximum of the authorized amount
+		if ($authorizedAmount <= $event->amount) {
+			$event->amount = $authorizedAmount;
+		}
 
-		// if ($authorizedAmount > $amount) {
-		// 	$transaction->amount = $amount;
-		// 	$transaction->paymentAmount = $amount;
-		// }
+		// Authorized amount is larger than the outstanding amount, update the transaction to have correct amounts
+		if ($authorizedAmount > $event->amount) {
+			//? Amount is always defined in the default currency, therefore no convertion should be made
+			$transaction->amount = $order->getOutstandingBalance();
+
+			// Set the payment amount to the events amount data
+			$transaction->paymentAmount = $event->amount;
+		}
+
+		// Convert to cents
+		//? Quickpay expects the amount to be in cents
+		$cents = $event->amount * 100;
 
 		//* Capture request
 		// Set payload
 		$payload = [
-			'amount' => $amount,
+			'amount' => $cents,
 		];
 
 		// Set custom headers
+		//? This is the only way, other than having to adjust quickpay itself to define a callback url 
 		$headers = [
 			'QuickPay-Callback-Url: ' . UrlHelper::siteUrl('quickpay/callbacks/payments/notify')
 		];
+
+		// Set gateway for the API request
+		$this->api->setGateway($gateway);
 
 		// make request to capture payment
 		$response = $this->api->setHeaders($headers)->post("/payments/{$authorizedTransation->reference}/capture", $payload);
