@@ -34,8 +34,11 @@ class TransactionService extends Component
       throw new Exception("No Quickpay reference supplied", 1);
     }
 
+    // Get the initial transaction
+    $inital = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
+
     // Get the parent transaction
-    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
+    $parent = $this->getLastTransaction($inital) ?? $inital;
 
     // Get the order belonging to the transaction
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
@@ -87,8 +90,11 @@ class TransactionService extends Component
       throw new Exception("No Quickpay reference supplied", 1);
     }
 
+    // Get the initial transaction
+    $inital = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
+
     // Get the parent transaction
-    $parent = Commerce::getInstance()->getTransactions()->getTransactionByReference($reference);
+    $parent = $this->getLastTransaction($inital) ?? $inital;
 
     // Get the order belonging to the transaction
     $order = Commerce::getInstance()->getOrders()->getOrderById($parent->orderId);
@@ -130,9 +136,9 @@ class TransactionService extends Component
    * Get the type of the latest child transaction
    *
    * @param TransactionModel $transaction
-   * @return object
+   * @return ?TransactionModel
    */
-  public function getLastTransaction(TransactionModel $transaction): object
+  public function getLastTransaction(TransactionModel $transaction): ?TransactionModel
   {
     $last = $this->_createTransactionQuery()
       ->where([
@@ -142,11 +148,11 @@ class TransactionService extends Component
       ->orderBy(['id' => SORT_DESC])
       ->one();
 
-    return (object)
-    [
-      'type' => $last ? $last['type'] : '',
-      'status' => $last ? $last['status'] : '',
-    ];
+    if (!$last) {
+      return null;
+    }
+
+    return Commerce::getInstance()->getTransactions()->getTransactionById($last['id']);
   }
 
   /**
