@@ -16,8 +16,9 @@ use yii\base\Event;
 use craft\events\DefineBehaviorsEvent;
 use QD\commerce\quickpay\plugin\Services;
 use QD\commerce\quickpay\behaviors\TransactionBehavior;
+use craft\base\Plugin as BasePlugin;
 
-class Plugin extends \craft\base\Plugin
+class Plugin extends BasePlugin
 {
 	use Services;
 

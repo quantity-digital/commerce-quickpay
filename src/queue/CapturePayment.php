@@ -3,11 +3,10 @@
 namespace QD\commerce\quickpay\queue;
 
 use Craft;
-use craft\commerce\base\GatewayInterface as BaseGatewayInterface;
+use craft\commerce\elements\Order;
 use craft\queue\BaseJob;
 use craft\commerce\Plugin as Commerce;
 use craft\commerce\records\Transaction as TransactionRecord;
-use \craft\Commerce\elements\Order;
 use craft\helpers\App;
 use craft\mail\Message;
 use Exception;
