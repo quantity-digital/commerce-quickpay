@@ -4,57 +4,86 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.2.1 - 2024-03-18
+## 4.2.2 - 2024-08-22
+
 ### Fixed
+
+- Fixed incorrect import, making case sensitive confirgurations fail on auto capture
+
+## 4.2.1 - 2024-03-18
+
+### Fixed
+
 - Fixed an issue where transactions would be ralated to the wrong parent transaction
 
 ## 4.2.0 - 2024-02-20
+
 ### Fixed
+
 - Updated capture functionallity to make use of outstanding balance instead of PaymentAmount
 
 ### Added
+
 - Added 'EVENT_BEFORE_PAYMENT_CAPTURE_AMOUNT' to modify the amount being captured
 
 ## 4.1.9 - 2024-01-22
+
 ### Added
+
 - Callback functionallity on Capture events
 
 ## 4.1.8 - 2023-11-14
+
 ### Added
+
 - Enabled the following gateways: Anyday split, Google pay, Apple pay
 
 ## 4.1.7 - 2023-10-30
+
 ### Added
+
 - Added events to modify quickpay basket
 
 ## 4.1.6 - 2023-10-18
+
 ### Fixed
+
 - Updated to use crafts native payment amounts
 
 ## 4.1.5 - 2023-10-18
+
 ### Fixed
+
 - Updated to use crafts native payment amounts
 
 ## 4.1.4 - 2023-08-29
+
 ### Fixed
+
 - Fixed bug when running autocapture job
 
 ## 4.1.3 - 2023-08-29
-### Fixed
-- Fixed bug when capturing payment
 
+### Fixed
+
+- Fixed bug when capturing payment
 
 ## 4.1.2 - 2023-08-29 [CRITICAL]
 
 ### Fixed
+
 - Fixed critical error, where orders could be marked as complete, before the payment was made & completed in quickpay
 
 ## 4.1.1 - 2023-08-25
+
 ### Added
+
 - Added new gateway setting, to define if amounts sent to quickpay should be converted into paymentcurrency. Is default set to `false`
 
 ## 4.1.1 - 2023-08-25
+
 ### Added
+
 - Added new gateway setting, to define if amounts sent to quickpay should be converted into paymentcurrency. Is default set to `false`
 
 ## 4.1.0 - 2023-06-23
