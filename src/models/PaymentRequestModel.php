@@ -44,43 +44,19 @@ class PaymentRequestModel extends Model
 	public function getPayload(): mixed
 	{
 		// Order info
-		$orderId = $this->order->reference;
 		$currency = $this->order->paymentCurrency;
+		$reference = $this->order->reference ?? null;
 
-		if ($orderId == null) {
-			$referenceTemplate = CommercePlugin::getInstance()->getStores()->getStoreBySiteId($this->order->orderSiteId)->getOrderReferenceFormat();
+		// Set id for quickpay
+		$reference = $this->_getSetReference($this->order);
+		$quickpayOrderId = $this->_getSetQuickpayReference($reference, $this->order);
 
-			try {
-				$orderId = Craft::$app->getView()->renderObjectTemplate($referenceTemplate, $this);
-				$this->order->reference = $orderId;
-				$originalRecalculationMode = $this->order->getRecalculationMode();
-				$this->order->setRecalculationMode(Order::RECALCULATION_MODE_ALL);
-				Craft::$app->getElements()->saveElement($this->order, false);
-				$this->order->setRecalculationMode($originalRecalculationMode);
-			} catch (Throwable $exception) {
-				Craft::error('Unable to generate order completion reference for order ID: ' . $this->order->id . ', with format: ' . $referenceTemplate . ', error: ' . $exception->getMessage());
-				throw $exception;
-			}
-		}
-
-		if ($count = count($this->order->transactions)) {
-			$orderId = $orderId . '-' . $count;
-		}
-
-		if (strlen($orderId) < 4) {
-			while (strlen($orderId) < 4) {
-				$orderId = '0' . $orderId;
-			}
-		}
-
-		$payload = [
-			'order_id' => $orderId,
+		return [
+			'order_id' => $quickpayOrderId,
 			'currency' => $currency,
 			'basket' => Plugin::getInstance()->getPayments()->getBasketPayload($this->order),
 			'shipping' => Plugin::getInstance()->getPayments()->getShippingPayload($this->order),
 		];
-
-		return $payload;
 	}
 
 	/**
@@ -186,5 +162,69 @@ class PaymentRequestModel extends Model
 		return [
 			[['order'], 'required'],
 		];
+	}
+
+	/**
+	 * Update craft order reference
+	 *
+	 * @param Order $order
+	 * @return string
+	 */
+	private function _getSetReference(Order $order): string
+	{
+		// Get current order reference
+		//? If active cart, reference is null
+		$reference = $order->reference ?? null;
+
+		// If reference exists, return it
+		if ($reference) {
+			return (string) $reference;
+		}
+
+		// Generate reference from template
+		// Fetch template from store settings
+		$referenceTemplate = CommercePlugin::getInstance()->getStores()->getStoreBySiteId($order->orderSiteId)->getOrderReferenceFormat();
+		// Render template
+		$orderId = Craft::$app->getView()->renderObjectTemplate($referenceTemplate, $order);
+
+		// Save to order
+		try {
+			$order->reference = $orderId;
+			Craft::$app->getElements()->saveElement($order, false);
+		} catch (Throwable $exception) {
+			throw $exception;
+		}
+
+		// Return
+		return (string) $order->reference;
+	}
+
+	/**
+	 * Update quickpay Order ID
+	 *
+	 * @param string $reference
+	 * @param Order $order
+	 * @return string
+	 */
+	private function _getSetQuickpayReference(string $reference, Order $order): string
+	{
+		//Update length of reference to minimum 4
+		//? Quickpay requires minimum 4 characters
+		$length = strlen($reference);
+		if ($length < 4) {
+			while ($length < 4) {
+				$reference = '0' . $reference;
+				$length++;
+			}
+		}
+
+		// Set transaction try count
+		//? Reference cant be the same for the transactions, if there are multiple transactions add transaction count
+		$count = count($order->transactions) ?? 0;
+		if (!$count) {
+			return (string) $reference;
+		}
+
+		return (string) $reference . '-' . $count;
 	}
 }
