@@ -48,7 +48,7 @@ class PaymentRequestModel extends Model
 		$currency = $this->order->paymentCurrency;
 
 		if ($orderId == null) {
-			$referenceTemplate = CommercePlugin::getInstance()->getSettings()->orderReferenceFormat;
+			$referenceTemplate = CommercePlugin::getInstance()->getStores()->getStoreBySiteId($this->order->orderSiteId)->getOrderReferenceFormat();
 
 			try {
 				$orderId = Craft::$app->getView()->renderObjectTemplate($referenceTemplate, $this);

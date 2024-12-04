@@ -241,13 +241,15 @@ class Payments extends Component
 	 *
 	 * @return Transaction|null
 	 */
-	public function getSuccessfulTransactionForOrder(Order $order): Transaction
+	public function getSuccessfulTransactionForOrder(Order $order): Transaction|null
 	{
 		foreach ($order->getTransactions() as $transaction) {
 			if ($transaction->isSuccessful()) {
 				return $transaction;
 			}
 		}
+
+		return null;
 	}
 
 	/**
