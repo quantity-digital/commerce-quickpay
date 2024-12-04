@@ -83,10 +83,7 @@ class Api extends Component
 	public function put(string $url, mixed $payload = []): stdClass
 	{
 		$response = $this->client->request->put($url, $payload);
-
-		if ($response->isSuccess()) {
-			return $response->asObject();
-		}
+		return $response->asObject();
 	}
 
 	/**

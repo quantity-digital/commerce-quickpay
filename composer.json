@@ -2,7 +2,7 @@
   "name": "quantity-digital/commerce-quickpay",
   "description": "QuickPay integration for Craft Commerce 4",
   "type": "craft-plugin",
-  "version": "4.2.2",
+  "version": "5.0.0-alpha",
   "keywords": [
     "craft",
     "cms",
@@ -24,12 +24,16 @@
     }
   ],
   "require": {
-    "craftcms/cms": "^4.0",
-    "craftcms/commerce": "^4.0",
+    "craftcms/cms": "^5.0",
+    "craftcms/commerce": "^5.0",
     "quickpay/quickpay-php-client": "^2.0"
   },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require-dev": {
-    "roave/security-advisories": "dev-master"
+    "roave/security-advisories": "dev-master",
+    "craftcms/phpstan": "dev-main",
+    "craftcms/rector": "dev-main"
   },
   "autoload": {
     "psr-4": {
