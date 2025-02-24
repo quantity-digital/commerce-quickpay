@@ -87,7 +87,7 @@ class Orders extends Component
 		}
 
 		// Get the "afterCaptureStatus" status.
-		$orderStatus = Commerce::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus));
+		$orderStatus = Commerce::getInstance()->getOrderStatuses()->getOrderStatusByHandle(App::parseEnv($gateway->afterCaptureStatus), $order->storeId);
 
 		if (!$orderStatus) {
 			throw new Exception("After capture status not found", 1);
