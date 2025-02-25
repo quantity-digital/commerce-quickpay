@@ -305,6 +305,11 @@ class Subscriptions extends Component
 			}
 		}
 
+		$pending = $this->_checkForPendingTransactions($order);
+		if ($pending) {
+			return;
+		}
+
 		$transaction = CommercePlugin::getInstance()->transactions->createTransaction($order);
 		$transaction->status = \craft\commerce\records\Transaction::STATUS_PENDING;
 		$transaction->type = \craft\commerce\records\Transaction::TYPE_AUTHORIZE;
@@ -392,5 +397,31 @@ class Subscriptions extends Component
 		}
 
 		return $gateway;
+	}
+
+	private function _checkForPendingTransactions(Order $order): bool
+	{
+		// Get transactions
+		$transactions = $order->transactions;
+
+		// If no transactions, return false
+		if (!$transactions) {
+			return false;
+		}
+
+		// Filter array to only authorized
+		$authorized = array_filter($transactions, function ($transaction) {
+			return $transaction['type'] == 'authorize';
+		});
+
+		// Get last authorized
+		$lastAuthorized = end($authorized);
+
+		// If last authorized is pending, return true
+		if ($lastAuthorized['status'] == 'pending') {
+			return true;
+		}
+
+		return false;
 	}
 }
