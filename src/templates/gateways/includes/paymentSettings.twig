@@ -12,33 +12,6 @@
 			class: 'selectize fullwidth',
 		}) }}
 	</div>
-
-	<div class="field width-50">
-		{{ booleanMenuField({
-			label: "Should order total be converted to payment currency"|t,
-			id: 'convertAmount',
-			name: 'convertAmount',
-			instructions: "If checked, payment amounts will be converted into payment currency based on the conversionrate"|t('commerce-quickpay'),
-        	includeEnvVars: true,
-			value: (gateway.convertAmount is defined) ? gateway.convertAmount : 0,
-			errors: gateway.getErrors('convertAmount'),
-			on: (gateway.convertAmount is defined) ? gateway.convertAmount : 0,
-		}) }}
-	</div>
-
-	<!- TODO: Implement 3D-secure ->
-	{# <div class="field width-50">
-							{{ booleanMenuField({
-								label: "Enable 3D-Secure on payment methods that alow it"|t,
-								id: 'enabled3ds',
-								name: 'enabled3ds',
-								instructions: "If checked, all eligble payment methods 3D-secure will get it enabled. To see full list visit https://learn.quickpay.net/tech-talk/appendixes/payment-methods/#payment-methods"|t('commerce-quickpay'),
-								value: 1,
-					        	includeEnvVars: true,
-								errors: gateway.getErrors('enabled3ds'),
-								on: (gateway.enabled3ds is defined) ? gateway.enabled3ds : 0,
-							}) }}
-						</div> #}
 </div>
 
 <hr>
