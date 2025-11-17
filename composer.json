@@ -1,47 +1,47 @@
 {
-  "name": "quantity-digital/commerce-quickpay",
-  "description": "QuickPay integration for Craft Commerce 4",
-  "type": "craft-plugin",
-  "version": "5.0.0-alpha.1",
-  "keywords": [
-    "craft",
-    "cms",
-    "craftcms",
-    "craft-plugin",
-    "craft-commerce",
-    "gateway",
-    "quickpay"
-  ],
-  "support": {
-    "docs": "https://github.com/quantity-digital/commerce-quickpay/blob/master/README.md",
-    "issues": "https://github.com/quantity-digital/commerce-quickpay/issues"
-  },
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Quantity Digital",
-      "homepage": "https://www.quantity.dk/"
-    }
-  ],
-  "require": {
-    "craftcms/cms": "^5.0",
-    "craftcms/commerce": "^5.0",
-    "quickpay/quickpay-php-client": "^2.0"
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "require-dev": {
-    "roave/security-advisories": "dev-master",
-    "craftcms/phpstan": "dev-main",
-    "craftcms/rector": "dev-main"
-  },
-  "autoload": {
-    "psr-4": {
-      "QD\\commerce\\quickpay\\": "src/"
-    }
-  },
-  "extra": {
-    "name": "QuickPay for Craft Commerce",
-    "handle": "commerce-quickpay"
-  }
+	"name": "quantity-digital/commerce-quickpay",
+	"description": "QuickPay integration for Craft Commerce 5",
+	"type": "craft-plugin",
+	"version": "5.0.0-alpha.2",
+	"keywords": [
+		"craft",
+		"cms",
+		"craftcms",
+		"craft-plugin",
+		"craft-commerce",
+		"gateway",
+		"quickpay"
+	],
+	"support": {
+		"docs": "https://github.com/quantity-digital/commerce-quickpay/blob/master/README.md",
+		"issues": "https://github.com/quantity-digital/commerce-quickpay/issues"
+	},
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Quantity Digital",
+			"homepage": "https://www.quantity.dk/"
+		}
+	],
+	"require": {
+		"craftcms/cms": "^5.0",
+		"craftcms/commerce": "^5.0",
+		"quickpay/quickpay-php-client": "^2.0"
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"require-dev": {
+		"roave/security-advisories": "dev-master",
+		"craftcms/phpstan": "dev-main",
+		"craftcms/rector": "dev-main"
+	},
+	"autoload": {
+		"psr-4": {
+			"QD\\commerce\\quickpay\\": "src/"
+		}
+	},
+	"extra": {
+		"name": "QuickPay for Craft Commerce",
+		"handle": "commerce-quickpay"
+	}
 }
